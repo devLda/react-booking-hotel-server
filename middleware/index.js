@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 
 const globalMiddelwares = (app, dir) => {
@@ -9,6 +10,7 @@ const globalMiddelwares = (app, dir) => {
   app.use(express.urlencoded());
   app.use(express.json());
   app.use(morgan("dev"));
+  app.use(cookieParser());
 
   app.use("/api/user", require("../modules/user"));
   app.use("/api/loaiphong", require("../modules/loaiphong"));

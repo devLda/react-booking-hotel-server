@@ -1,16 +1,22 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const TangSchema = new mongoose.Schema({
-    TenTang: {
-        type: String,
-        required: true,
-        default: "Tầng 1",
+const TangSchema = new mongoose.Schema(
+  {
+    IDTang: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    
-}, {
-    timestamps: false
-});
+    TenTang: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: false,
+  }
+);
 
 TangSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('Tang', TangSchema);
+module.exports = mongoose.model("Tang", TangSchema);

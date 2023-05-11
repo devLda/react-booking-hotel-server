@@ -1,20 +1,25 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const LoaiPhongSchema = new mongoose.Schema({
+const LoaiPhongSchema = new mongoose.Schema(
+  {
+    IDLoaiPhong: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     TenLoaiPhong: {
-        type: String,
-        required: true,
-        default: "Deluxe Room",
+      type: String,
+      required: true,
     },
     MoTa: {
-        type: String,
-        default: "",
-    }
-    
-}, {
-    timestamps: false
-});
+      type: String,
+    },
+  },
+  {
+    timestamps: false,
+  }
+);
 
 LoaiPhongSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('LoaiPhong', LoaiPhongSchema);
+module.exports = mongoose.model("LoaiPhong", LoaiPhongSchema);

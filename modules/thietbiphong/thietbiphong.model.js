@@ -1,35 +1,30 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const ThietBiPhongSchema = new mongoose.Schema({
+const ThietBiPhongSchema = new mongoose.Schema(
+  {
     IDThietBiPhong: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     IDThietBi: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "ThietBi",
     },
     IDPhong: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "Phong",
     },
     SoLuong: {
-        type: Number,
-        required: true,
-        unique: false,
-        default: "",
+      type: Number,
+      required: true,
     },
-    
-}, {
-    timestamps: false
-});
+  },
+  {
+    timestamps: false,
+  }
+);
 
 ThietBiPhongSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('ThietBiPhong', ThietBiPhongSchema);
+module.exports = mongoose.model("ThietBiPhong", ThietBiPhongSchema);

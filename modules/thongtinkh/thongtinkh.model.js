@@ -1,47 +1,38 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const ThongTinKHSchema = new mongoose.Schema({
+const ThongTinKHSchema = new mongoose.Schema(
+  {
     IDThongTinKH: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     TenKH: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: String,
+      required: true,
     },
     NgaySinh: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: String,
+      required: true,
     },
     SDT: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: String,
+      required: true,
     },
     CCCD: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: String,
+      required: true,
     },
     GioiTinh: {
-        type: Boolean,
-        required: true,
-        unique: false,
-        default: "",
+      type: Boolean,
+      default: true,
     },
-    
-}, {
-    timestamps: false
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
 ThongTinKHSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('ThongTinKH', ThongTinKHSchema);
+module.exports = mongoose.model("ThongTinKH", ThongTinKHSchema);

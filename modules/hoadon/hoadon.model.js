@@ -1,35 +1,26 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const HoaDonSchema = new mongoose.Schema({
+const HoaDonSchema = new mongoose.Schema(
+  {
     IDHoaDon: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     IDDatPhong: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "DatPhong",
     },
     TongTien: {
-        type: Number,
-        required: false,
-        unique: false,
-        default: "0",
+      type: Number,
+      default: 0,
     },
-    NgayThanhToan: {
-        type: Date,
-        required: true,
-        unique: false,
-        default: "''",
-    },
-    
-}, {
-    timestamps: false
-});
+  },
+  {
+    timestamps: false,
+  }
+);
 
 HoaDonSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('HoaDon', HoaDonSchema);
+module.exports = mongoose.model("HoaDon", HoaDonSchema);

@@ -1,56 +1,37 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const crypto = require("crypto")
+const crypto = require("crypto");
 const mongoosePaginate = require("mongoose-paginate");
 
 const UserSchema = new mongoose.Schema(
   {
-    Username: {
-      type: String,
-      required: true,
-      unique: true,
-      default: "''",
-    },
-    Password: {
-      type: String,
-      required: true,
-      unique: false,
-      default: "''",
-    },
     HoVaTen: {
       type: String,
       required: true,
-      unique: false,
-      default: "''",
-    },
-    NgaySinh: {
-      type: Date,
-      required: false,
-      unique: false,
-      default: null,
-    },
-    SDT: {
-      type: String,
-      required: true,
-      unique: false,
-      default: "''",
     },
     Email: {
       type: String,
       required: true,
-      unique: false,
-      default: "''",
+      unique: true,
+    },
+    Password: {
+      type: String,
+      required: true,
+    },
+    NgaySinh: {
+      type: Date,
+      default: null,
+    },
+    SDT: {
+      type: String,
+      default: "",
     },
     CCCD: {
       type: String,
-      required: false,
-      unique: false,
-      default: null,
+      default: "",
     },
     GioiTinh: {
       type: Boolean,
-      required: false,
-      unique: false,
       default: true,
     },
     Role: {
@@ -92,11 +73,14 @@ UserSchema.methods = {
     return await bcrypt.compare(Password, this.Password);
   },
   createPasswordChangedToken: function () {
-    const resetToken = crypto.randomBytes(32).toString('hex')
-    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex')
-    this.passwordResetExpires = Date.now() + 15 * 60 * 1000
-    return resetToken
-  }
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    this.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    this.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+    return resetToken;
+  },
 };
 
 UserSchema.plugin(mongoosePaginate);

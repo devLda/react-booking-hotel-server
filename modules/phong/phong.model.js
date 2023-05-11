@@ -2,57 +2,50 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate');
 
 const PhongSchema = new mongoose.Schema({
-    IDPhong: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+    loaiphong: {
+        type: mongoose.Types.ObjectId,
+        ref: 'LoaiPhong'
     },
-    IDLoaiPhong: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+    tang: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Tang'
     },
-    IDTang: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
-    },
-    IDBaiViet: {
-        type: Number,
-        required: true,
-        unique: false,
-        default: "",
+    images: {
+        type: Array
     },
     SoNguoi: {
         type: Number,
-        required: false,
-        unique: false,
-        default: "",
+        default: 0,
     },
     TinhTrang: {
         type: Boolean,
         required: true,
-        unique: false,
-        default: "",
+        default: true,
     },
     DienTich: {
         type: Number,
         required: true,
-        unique: false,
-        default: "",
+        default: 20,
     },
     GiaPhong: {
         type: Number,
         required: true,
-        unique: false,
-        default: "",
+        default: 500,
+    },
+    ratings: [
+        {
+            star: {type: Number},
+            postedBy: {type: mongoose.Types.ObjectId, ref: 'User'},
+            comment: {type: String}
+        }
+    ],
+    totalRatings: {
+        type: Number,
+        default: 0
     },
     
 }, {
-    timestamps: false
+    timestamps: true
 });
 
 PhongSchema.plugin(mongoosePaginate);

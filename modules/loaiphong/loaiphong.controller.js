@@ -3,14 +3,14 @@ const Loaiphong = require("./loaiphong.model");
       
 module.exports.create = async(req, res) => {
   try {
-    const item = new Loaiphong(req.body);
+    const item = await Loaiphong.create(req.body);
 
     const result = await item.save();
+
     return res.status(200).json(result);
   } catch (err) {
     console.error("Loaiphong creation failed: " + err);
-    const { status, message } = errorHandler(err)
-    res.status(status).json({message, entity: 'Loaiphong'})
+    errorHandler(err, res, req)
   }
 };
     
@@ -23,8 +23,7 @@ module.exports.getAll = async(req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error("Loaiphong getAll failed: " + err);
-    const { status, message } = errorHandler(err)
-    res.status(status).json({message, entity: 'Loaiphong'})
+    errorHandler(err, res, req)
   }
 };
 
@@ -36,8 +35,7 @@ module.exports.getById = async(req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error("Loaiphong getById failed: " + err);
-    const { status, message } = errorHandler(err)
-    res.status(status).json({message, entity: 'Loaiphong'})
+    errorHandler(err, res, req)
   }
 };
     
@@ -62,8 +60,8 @@ module.exports.getList = async(req, res) => {
       return res.status(200).json(result);
     } catch (err) {
       console.error("Loaiphong list failed: " + err);
-      const { status, message } = errorHandler(err)
-      res.status(status).json({message, entity: 'Loaiphong'})
+      errorHandler(err, res, req)
+
     }
 };
     
@@ -76,8 +74,7 @@ module.exports.update = async(req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error("Loaiphong update failed: " + err);
-    const { status, message } = errorHandler(err)
-    res.status(status).json({message, entity: 'Loaiphong'})
+    errorHandler(err, res, req)
   }
 };
     
@@ -90,8 +87,7 @@ module.exports.remove = async(req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error("Loaiphong delete failed: " + err);
-    const { status, message } = errorHandler(err)
-    res.status(status).json({message, entity: 'Loaiphong'})
+    errorHandler(err, res, req)
   }
 };
     

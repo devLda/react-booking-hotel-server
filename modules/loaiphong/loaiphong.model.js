@@ -2,18 +2,15 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate');
 
 const LoaiPhongSchema = new mongoose.Schema({
-    IDLoaiPhong: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
-    },
     TenLoaiPhong: {
         type: String,
         required: true,
-        unique: false,
-        default: "''",
+        default: "Deluxe Room",
     },
+    MoTa: {
+        type: String,
+        default: "",
+    }
     
 }, {
     timestamps: false

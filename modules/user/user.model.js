@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema(
     },
     SDT: {
       type: String,
-      default: "",
+      required: true,
     },
     CCCD: {
       type: String,
@@ -52,6 +52,9 @@ const UserSchema = new mongoose.Schema(
       type: String,
     },
     passwordResetExpires: {
+      type: String,
+    },
+    registerToken: {
       type: String,
     },
   },

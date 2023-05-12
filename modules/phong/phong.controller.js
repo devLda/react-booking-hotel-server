@@ -1,4 +1,6 @@
 const Phong = require("./phong.model");
+const Tang = require("../tang/tang.model")
+const LoaiPhong = require("../loaiphong/loaiphong.model")
 const errorHandler = require("../../utils/errorHandler");
 
 module.exports.create = async (req, res) => {
@@ -11,9 +13,14 @@ module.exports.create = async (req, res) => {
         mes: "Missing input",
       });
 
-    const item = await Phong.findOne({ IDPhong });
+    const phong = await Phong.findOne({ IDPhong });
+    const tang = await Tang.findById(IDTang);
+    const loaiphong = await LoaiPhong.findById(IDLoaiPhong);
 
-    if (item) throw new Error("Phòng đã tồn tại");
+    if(!tang) throw new Error ("Tầng không tồn tại");
+    if(!loaiphong) throw new Error ("Loại phòng không tồn tại");
+
+    if (phong) throw new Error("Phòng đã tồn tại");
     else {
       const newPhong = await Phong.create(req.body);
       return res.status(200).json({
@@ -32,7 +39,10 @@ module.exports.getAll = async (req, res) => {
     let query = req.query || {};
     const result = await Phong.find(query);
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: result ? true : false,
+      phong: result
+    });
   } catch (err) {
     console.error("Phong getAll failed: " + err);
     errorHandler(err, res, req);

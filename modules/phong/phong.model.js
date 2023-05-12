@@ -21,11 +21,11 @@ const PhongSchema = new mongoose.Schema(
     },
     SoNguoi: {
       type: Number,
-      default: 0,
+      required: true,
     },
     TinhTrang: {
       type: Boolean,
-      default: true,
+      required: true,
     },
     DienTich: {
       type: Number,

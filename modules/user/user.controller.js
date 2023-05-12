@@ -7,27 +7,98 @@ const {
 const sendMail = require("../../utils/sendMail");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const makeToken = require("uniqid");
 
+//Dang ky thuong
+// const register = async (req, res) => {
+//   try {
+//     const { HoVaTen, Password, Email } = req.body;
+//     if (!HoVaTen || !Password || !Email)
+//       return res.status(400).json({
+//         success: false,
+//         mes: "Missing input",
+//       });
+
+//     const user = await User.findOne({ Email });
+//     if (user) throw new Error("Email đã tồn tại!");
+//     else {
+//       const newUser = await User.create(req.body);
+//       return res.status(200).json({
+//         success: newUser ? true : false,
+//         mes: newUser
+//           ? "Đăng ký thành công. Vui lòng đăng nhập"
+//           : "Đăng ký thất bại",
+//       });
+//     }
+//   } catch (err) {
+//     console.error("User creation failed: " + err);
+//     // const { status, message } = errorHandler(err, res, req);
+//     errorHandler(err, res, req);
+//     // res.status(status).json({ message, entity: "User" });
+//   }
+// };
+
+//Dangky bang email
 const register = async (req, res) => {
   try {
-    const { Username, Password, Email } = req.body;
-    if (!Username || !Password || !Email)
+    const { HoVaTen, Password, Email, SDT } = req.body;
+    if (!HoVaTen || !Password || !Email || !SDT)
       return res.status(400).json({
         success: false,
-        mes: "Missing input",
+        mes: "Vui lòng nhập đủ các trường",
       });
 
     const user = await User.findOne({ Email });
-    if (user) throw new Error("Email đã tồn tại!");
+
+    if (user) throw new Error("Email đã được đăng ký bởi một tài khoản khác");
     else {
-      const newUser = await User.create(req.body);
+      const token = makeToken();
+      res.cookie(
+        "dataregister",
+        { ...req.body, token },
+        { httpOnly: true, maxAge: 15 * 60 * 1000 }
+      );
+
+      const html = `<p style="font-size: 16px;">Xin vui lòng click vào link dưới đây để hoàn tất quá trình đăng ký. 
+    Link này sẽ hết hạn sau 15 phút kể từ bây giờ.
+    <a href=${process.env.URL_SERVER}/api/user/final-register/${token}>Click here</a>
+    </p>`;
+
+      const data = {
+        Email,
+        html,
+        subject: "Hoàn tất đăng ký tài khoản AnhOct Hotel",
+      };
+
+      const rs = await sendMail(data);
       return res.status(200).json({
-        success: newUser ? true : false,
-        mes: newUser
-          ? "Đăng ký thành công. Vui lòng đăng nhập"
-          : "Đăng ký thất bại",
+        success: true,
+        mes: "Hãy kiểm tra email để kích hoạt tài khoản",
       });
     }
+  } catch (err) {
+    console.error("User creation failed: " + err);
+    // const { status, message } = errorHandler(err, res, req);
+    errorHandler(err, res, req);
+    // res.status(status).json({ message, entity: "User" });
+  }
+};
+
+const finalRegister = async (req, res) => {
+  try {
+    const cookie = req.cookies;
+    const {token} = req.params
+    console.log(cookie)
+    console.log(token)
+    if(!cookie || cookie?.dataregister?.token !== token) return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`)
+    const newUser = await User.create({
+      Email: cookie?.dataregister?.Email,
+      Password: cookie?.dataregister?.Password,
+      HoVaTen: cookie?.dataregister?.HoVaTen,
+      SDT: cookie?.dataregister?.SDT,
+    })
+    if(newUser) return res.redirect(`${process.env.URL_CLIENT}/final-register/success`)
+    else return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`)
   } catch (err) {
     console.error("User creation failed: " + err);
     // const { status, message } = errorHandler(err, res, req);
@@ -41,10 +112,10 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { Email, Password } = req.body;
-    if (!(Password || Email))
+    if (!Password || !Email)
       return res.status(400).json({
         success: false,
-        mes: "Missing input",
+        mes: "Nhập thiếu trường dữ liệu",
       });
 
     const response = await User.findOne({ Email });
@@ -157,6 +228,7 @@ const forgotPassword = async (req, res) => {
     const data = {
       Email,
       html,
+      subject: "Reset your password",
     };
 
     const rs = await sendMail(data);
@@ -328,6 +400,7 @@ const remove = async (req, res) => {
 
 module.exports = {
   register,
+  finalRegister,
   login,
   refreshAccessToken,
   logout,

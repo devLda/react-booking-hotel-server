@@ -1,6 +1,6 @@
 const Phong = require("./phong.model");
-const Tang = require("../tang/tang.model")
-const LoaiPhong = require("../loaiphong/loaiphong.model")
+const Tang = require("../tang/tang.model");
+const LoaiPhong = require("../loaiphong/loaiphong.model");
 const errorHandler = require("../../utils/errorHandler");
 
 module.exports.create = async (req, res) => {
@@ -17,8 +17,8 @@ module.exports.create = async (req, res) => {
     const tang = await Tang.findById(IDTang);
     const loaiphong = await LoaiPhong.findById(IDLoaiPhong);
 
-    if(!tang) throw new Error ("Tầng không tồn tại");
-    if(!loaiphong) throw new Error ("Loại phòng không tồn tại");
+    if (!tang) throw new Error("Tầng không tồn tại");
+    if (!loaiphong) throw new Error("Loại phòng không tồn tại");
 
     if (phong) throw new Error("Phòng đã tồn tại");
     else {
@@ -41,7 +41,7 @@ module.exports.getAll = async (req, res) => {
 
     return res.status(200).json({
       success: result ? true : false,
-      phong: result
+      phong: result,
     });
   } catch (err) {
     console.error("Phong getAll failed: " + err);

@@ -1,7 +1,8 @@
 const Loaiphong = require("./loaiphong.model");
 const errorHandler = require("../../utils/errorHandler");
+const asyncHandler = require("express-async-handler");
 
-module.exports.create = async (req, res) => {
+const create = async (req, res) => {
   try {
     const { IDLoaiPhong } = req.body;
 
@@ -13,10 +14,11 @@ module.exports.create = async (req, res) => {
 
     const item = await Loaiphong.findOne({ IDLoaiPhong });
 
-    if (item) throw new Error("Tên loại phòng đã tồn tại");
+    if (item) throw new Error("Loại phòng đã tồn tại");
     else {
-      const newLoai = await Loaiphong.create(req.body);
-      console.log(newLoai);
+      const data = req.body;
+      data.TienNghi = req.body.TienNghi.split(",");
+      const newLoai = await Loaiphong.create(data);
       return res.status(200).json({
         success: newLoai ? true : false,
         mes: newLoai,
@@ -28,19 +30,22 @@ module.exports.create = async (req, res) => {
   }
 };
 
-module.exports.getAll = async (req, res) => {
+const getAll = async (req, res) => {
   try {
     let query = req.query || {};
     const result = await Loaiphong.find(query);
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: result ? true : false,
+      loaiphong: result,
+    });
   } catch (err) {
     console.error("Loaiphong getAll failed: " + err);
     errorHandler(err, res, req);
   }
 };
 
-module.exports.getById = async (req, res) => {
+const getById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Loaiphong.findById(id);
@@ -52,7 +57,7 @@ module.exports.getById = async (req, res) => {
   }
 };
 
-module.exports.getList = async (req, res) => {
+const getList = async (req, res) => {
   try {
     const { page = 1, limit = 20, sortField, sortOrder } = req.query;
     const options = {
@@ -75,7 +80,7 @@ module.exports.getList = async (req, res) => {
   }
 };
 
-module.exports.update = async (req, res) => {
+const update = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Loaiphong.findOneAndUpdate({ _id: id }, req.body, {
@@ -89,7 +94,7 @@ module.exports.update = async (req, res) => {
   }
 };
 
-module.exports.remove = async (req, res) => {
+const remove = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -99,4 +104,30 @@ module.exports.remove = async (req, res) => {
     console.error("Loaiphong delete failed: " + err);
     errorHandler(err, res, req);
   }
+};
+
+const uploadImage = asyncHandler(async (req, res) => {
+  const { pid } = req.params;
+  if (!req.files) throw new Error("Ảnh bị lỗi!!!");
+  const response = await Loaiphong.findByIdAndUpdate(
+    pid,
+    {
+      $push: { images: { $each: req.files.map((el) => el.path) } },
+    },
+    { new: true }
+  );
+  return res.status(200).json({
+    status: response ? true : false,
+    updateProduct: response ? response : "Không thể upload ảnh",
+  });
+});
+
+module.exports = {
+  create,
+  getAll,
+  getById,
+  getList,
+  update,
+  remove,
+  uploadImage,
 };

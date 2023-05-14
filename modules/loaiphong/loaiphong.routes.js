@@ -1,17 +1,28 @@
-const express = require('express');
-const { create, getAll, getById, getList, update, remove} = require('./loaiphong.controller');
+const express = require("express");
+const {
+  create,
+  getAll,
+  getById,
+  getList,
+  update,
+  remove,
+  uploadImage,
+} = require("./loaiphong.controller");
 const router = express.Router();
+const uploader = require("../../configs/cloudinary.config");
 
-router.post('/add', create);
+router.post("/add", create);
 
-router.get('/', getAll);
+router.get("/", getAll);
 
-router.get('/list', getList);
+router.get("/list", getList);
 
-router.get('/id/:id', getById);
+router.get("/id/:id", getById);
 
-router.put('/update/:id', update);
+router.put("/update/:id", update);
 
-router.delete('/delete/:id', remove);
+router.delete("/delete/:id", remove);
+
+router.put("/uploadimage/:pid", uploader.array("images", 3), uploadImage);
 
 module.exports = router;

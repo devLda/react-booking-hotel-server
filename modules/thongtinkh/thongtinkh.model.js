@@ -12,12 +12,12 @@ const ThongTinKHSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    NgaySinh: {
+    SDT: {
       type: String,
       required: true,
     },
-    SDT: {
-      type: String,
+    NgaySinh: {
+      type: Date,
       required: true,
     },
     CCCD: {
@@ -26,7 +26,7 @@ const ThongTinKHSchema = new mongoose.Schema(
     },
     GioiTinh: {
       type: Boolean,
-      default: true,
+      required: true,
     },
   },
   {

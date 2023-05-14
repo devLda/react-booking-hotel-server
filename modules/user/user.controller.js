@@ -87,18 +87,21 @@ const register = async (req, res) => {
 const finalRegister = async (req, res) => {
   try {
     const cookie = req.cookies;
-    const {token} = req.params
-    console.log(cookie)
-    console.log(token)
-    if(!cookie || cookie?.dataregister?.token !== token) return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`)
+    const { token } = req.params;
+    if (!cookie || cookie?.dataregister?.token !== token) {
+      res.clearCookie("dataregister");
+      return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`);
+    }
     const newUser = await User.create({
       Email: cookie?.dataregister?.Email,
       Password: cookie?.dataregister?.Password,
       HoVaTen: cookie?.dataregister?.HoVaTen,
       SDT: cookie?.dataregister?.SDT,
-    })
-    if(newUser) return res.redirect(`${process.env.URL_CLIENT}/final-register/success`)
-    else return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`)
+    });
+    res.clearCookie("dataregister");
+    if (newUser)
+      return res.redirect(`${process.env.URL_CLIENT}/final-register/success`);
+    else return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`);
   } catch (err) {
     console.error("User creation failed: " + err);
     // const { status, message } = errorHandler(err, res, req);
@@ -120,18 +123,20 @@ const login = async (req, res) => {
 
     const response = await User.findOne({ Email });
     if (response && (await response.isCorrectPassword(Password))) {
-      const { Password, Role, ...userData } = response.toObject();
+      const { Password, Role, refreshToken, ...userData } = response.toObject();
       const accessToken = generateAccessToken(response._id, Role);
-      const refreshToken = generateRefreshToken(response._id);
+      const newRefreshToken = generateRefreshToken(response._id);
       //Luu refresh token
       await User.findByIdAndUpdate(
         response._id,
-        { refreshToken },
+        { refreshToken: newRefreshToken },
         { new: true }
       );
-      res.cookie("refreshToken ", refreshToken, {
+      res.cookie("refreshToken ", newRefreshToken, {
         httpOnly: true,
+        secure: true,
         maxAge: 15 * 60 * 1000,
+        sameSite: "none",
       });
       return res.status(200).json({
         success: true,
@@ -212,17 +217,16 @@ const logout = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const { Email } = req.query;
-    console.log(Email);
-    if (!Email) throw Error("Missing email!");
+    const { Email } = req.body;
+    if (!Email) throw Error("Bạn chưa nhập Email!");
     const user = await User.findOne({ Email });
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error("Không tìm thấy người dùng");
     const resetToken = user.createPasswordChangedToken();
     await user.save();
 
     const html = `<p style="font-size: 16px;">Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn. 
     Link này sẽ hết hạn sau 15 phút kể từ bây giờ.
-    <a href=${process.env.URL_SERVER}/api/user/reset-password/${resetToken}>Click here</a>
+    <a href=${process.env.URL_CLIENT}/reset-password/${resetToken}>Click here</a>
     </p>`;
 
     const data = {
@@ -233,8 +237,10 @@ const forgotPassword = async (req, res) => {
 
     const rs = await sendMail(data);
     return res.status(200).json({
-      success: true,
-      rs,
+      success: rs.response?.includes("OK") ? true : false,
+      mes: rs.response?.includes("OK")
+        ? "Vui lòng kiểm tra email của bạn!"
+        : "Đã có lỗi vui lòng thử lại sau",
     });
   } catch (err) {
     console.error("ForgotPassword thất bại: " + err);
@@ -248,7 +254,8 @@ const resetPassword = async (req, res) => {
   try {
     const { Password, Token } = req.body;
 
-    if (!(Password || Token)) throw new Error("Missing Inputs");
+    if (!Password) throw new Error("Bạn chưa nhập mật khẩu mới");
+    if (!Token) throw new Error("Link của bạn đã hết hạn");
 
     const passwordResetToken = crypto
       .createHash("sha256")
@@ -258,7 +265,8 @@ const resetPassword = async (req, res) => {
       passwordResetToken,
       passwordResetExpires: { $gt: Date.now() },
     });
-    if (!user) throw new Error("Invalid reset token");
+    if (!user)
+      throw new Error("Link của bạn đã hết hạn. Vui lòng gửi yêu cầu mới");
     user.Password = Password;
     user.passwordResetToken = undefined;
     user.passwordChangedAt = Date.now();
@@ -266,7 +274,9 @@ const resetPassword = async (req, res) => {
     await user.save();
     return res.status(200).json({
       success: user ? true : false,
-      mes: user ? "Update password" : "Something went wrong",
+      mes: user
+        ? "Mật khẩu đã được đặt lại"
+        : "Đặt lại mật khẩu không thành công",
     });
   } catch (err) {
     console.error("Resetpassword thất bại " + err);
@@ -283,7 +293,7 @@ const getCurrent = async (req, res) => {
     );
     return res.status(200).json({
       success: user ? true : false,
-      mes: user ? user : "User not found",
+      mes: user ? user : "Không tìm thấy người dùng",
     });
   } catch (err) {
     console.error("Lấy user thất bại: " + err);
@@ -312,8 +322,7 @@ const create = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    let query = req.query || {};
-    const result = await User.find(query);
+    const result = await User.find().select("-refreshToken -Password -Role");
 
     return res.status(200).json(result);
   } catch (err) {
@@ -385,11 +394,17 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
-    const { Username } = req.params;
-    console.log(Username);
+    const { _id } = req.query;
 
-    const result = await User.deleteOne({ Username: Username });
-    return res.status(200).json(result);
+    if (!_id) throw new Error("Đầu vào bị thiếu!");
+
+    const response = await User.deleteOne({ Username: Username });
+    return res.status(200).json({
+      success: response ? true : false,
+      mes: response
+        ? `Tài khoản với email ${response.Email} đã được xoá thành công`
+        : "Không có tài khoản được xoá",
+    });
   } catch (err) {
     console.error("User delete failed: " + err);
     // const { status, message } = errorHandler(err);

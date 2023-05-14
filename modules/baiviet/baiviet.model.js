@@ -1,35 +1,36 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const BaiVietSchema = new mongoose.Schema({
+const BaiVietSchema = new mongoose.Schema(
+  {
     IDBaiViet: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     IDPhong: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "Phong",
     },
-    HinhAnh: {
-        type: String,
-        required: false,
-        unique: false,
-        default: "''",
+    images: {
+      type: Array,
     },
-    BinhLuan: {
-        type: String,
-        required: false,
-        unique: false,
-        default: "''",
+    ratings: [
+      {
+        star: { type: Number },
+        postedBy: { type: mongoose.Types.ObjectId, ref: "User" },
+        comment: { type: String },
+      },
+    ],
+    totalRatings: {
+      type: Number,
+      default: 0,
     },
-    
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
 BaiVietSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('BaiViet', BaiVietSchema);
+module.exports = mongoose.model("BaiViet", BaiVietSchema);

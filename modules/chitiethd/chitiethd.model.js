@@ -1,35 +1,30 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const ChiTietHDSchema = new mongoose.Schema({
+const ChiTietHDSchema = new mongoose.Schema(
+  {
     IDChiTietHoaDon: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     IDHoaDon: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "HoaDon",
     },
     IDDichVu: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "DichVu",
     },
     SoLuong: {
-        type: Number,
-        required: true,
-        unique: false,
-        default: "",
+      type: Number,
+      required: true,
     },
-    
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
 ChiTietHDSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('ChiTietHD', ChiTietHDSchema);
+module.exports = mongoose.model("ChiTietHD", ChiTietHDSchema);

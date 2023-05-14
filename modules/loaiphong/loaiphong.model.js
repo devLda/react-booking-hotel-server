@@ -15,6 +15,13 @@ const LoaiPhongSchema = new mongoose.Schema(
     MoTa: {
       type: String,
     },
+    TienNghi: {
+      type: Array,
+      required: true,
+    },
+    images: {
+      type: Array,
+    },
   },
   {
     timestamps: false,

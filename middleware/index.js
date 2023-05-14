@@ -6,11 +6,13 @@ const path = require("path");
 
 const globalMiddelwares = (app, dir) => {
   app.use("/public", express.static(path.join(dir, "public")));
-  app.use(cors({
-    origin: process.env.URL_CLIENT,
-    methods: ['POST', 'PUT', 'GET', 'DELETE'],
-    credentials: true
-  }));
+  app.use(
+    cors({
+      origin: true,
+      methods: ["POST", "PUT", "GET", "DELETE"],
+      credentials: true,
+    })
+  );
   app.use(express.urlencoded());
   app.use(express.json());
   app.use(morgan("dev"));

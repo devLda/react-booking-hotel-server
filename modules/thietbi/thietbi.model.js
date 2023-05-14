@@ -12,6 +12,9 @@ const ThietBiSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    images: {
+      type: Array,
+    },
   },
   {
     timestamps: false,

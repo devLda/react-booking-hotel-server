@@ -1,47 +1,38 @@
-const mongoose = require('mongoose');
-const mongoosePaginate = require('mongoose-paginate');
+const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate");
 
-const DatPhongSchema = new mongoose.Schema({
+const DatPhongSchema = new mongoose.Schema(
+  {
     IDDatPhong: {
-        type: String,
-        required: true,
-        unique: true,
-        default: "''",
+      type: String,
+      required: true,
+      unique: true,
     },
     IDPhong: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "Phong",
     },
     IDThongTinKH: {
-        type: String,
-        required: true,
-        unique: false,
-        default: "''",
+      type: mongoose.Types.ObjectId,
+      ref: "ThongTinKH",
     },
     NgayBatDau: {
-        type: Date,
-        required: true,
-        unique: false,
-        default: "''",
+      type: Date,
+      required: true,
     },
     NgayKetThuc: {
-        type: Date,
-        required: true,
-        unique: false,
-        default: "''",
+      type: Date,
+      required: true,
     },
     TrangThaiDat: {
-        type: Boolean,
-        required: true,
-        unique: false,
-        default: "",
+      type: Boolean,
+      default: false,
     },
-    
-}, {
-    timestamps: false
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
 DatPhongSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model('DatPhong', DatPhongSchema);
+module.exports = mongoose.model("DatPhong", DatPhongSchema);

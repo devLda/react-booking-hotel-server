@@ -5,42 +5,26 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const UserSchema = new mongoose.Schema(
   {
-    HoVaTen: {
-      type: String,
-      required: true,
-    },
     Email: {
       type: String,
       required: true,
       unique: true,
     },
-    Password: {
+    HoVaTen: {
       type: String,
       required: true,
     },
-    NgaySinh: {
-      type: Date,
-      default: Date.now(),
+    Password: {
+      type: String,
+      required: true,
     },
     SDT: {
       type: String,
       required: true,
     },
-    CCCD: {
-      type: String,
-      default: "",
-    },
-    GioiTinh: {
-      type: Boolean,
-      default: true,
-    },
     Role: {
       type: String,
       default: "user",
-    },
-    Cart: {
-      type: Array,
-      default: [],
     },
     refreshToken: {
       type: String,

@@ -1,17 +1,28 @@
-const express = require('express');
-const { create, getAll, getById, getList, update, remove} = require('./phong.controller');
+const express = require("express");
+const {
+  create,
+  getAll,
+  getById,
+  getMultiDataPhong,
+  update,
+  remove,
+  getMultiAllData,
+} = require("./phong.controller");
 const router = express.Router();
+const uploader = require("../../configs/cloudinary.config");
 
-router.post('/add', create);
+router.post("/add", uploader.array("images", 3), create);
 
-router.get('/', getAll);
+router.get("/", getAll);
 
-router.get('/list', getList);
+router.get("/multi/:pid", getMultiDataPhong);
 
-router.get('/id/:id', getById);
+router.get("/multiphong", getMultiAllData);
 
-router.put('/:id', update);
+router.get("/id/:id", getById);
 
-router.delete('/delete/:id', remove);
+router.put("/:id", update);
+
+router.delete("/delete/:id", remove);
 
 module.exports = router;

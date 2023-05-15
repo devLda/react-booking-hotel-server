@@ -3,7 +3,7 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const ThongTinKHSchema = new mongoose.Schema(
   {
-    IDThongTinKH: {
+    Email: {
       type: String,
       required: true,
       unique: true,
@@ -14,18 +14,6 @@ const ThongTinKHSchema = new mongoose.Schema(
     },
     SDT: {
       type: String,
-      required: true,
-    },
-    NgaySinh: {
-      type: Date,
-      required: true,
-    },
-    CCCD: {
-      type: String,
-      required: true,
-    },
-    GioiTinh: {
-      type: Boolean,
       required: true,
     },
   },

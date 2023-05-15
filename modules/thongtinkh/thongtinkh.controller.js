@@ -3,15 +3,15 @@ const errorHandler = require("../../utils/errorHandler");
 
 module.exports.create = async (req, res) => {
   try {
-    const { IDThongTinKH } = req.body;
+    const { Email } = req.body;
 
-    if (!IDThongTinKH)
+    if (!Email)
       return res.status(400).json({
         success: false,
         mes: "Missing input",
       });
 
-    const KH = await Thongtinkh.findOne({ IDThongTinKH });
+    const KH = await Thongtinkh.findOne({ Email });
 
     if (KH) throw new Error("Khách hàng đã tồn tại");
     else {

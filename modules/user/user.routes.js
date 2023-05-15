@@ -1,14 +1,10 @@
 const express = require("express");
 const {
-  create,
   getAll,
-  getById,
-  getList,
-  update,
   remove,
   register,
   login,
-  getCurrent,
+  getAccessToken,
   refreshAccessToken,
   logout,
   resetPassword,
@@ -24,17 +20,9 @@ const {
 
 const router = express.Router();
 
-// router.post("/add", create);
+router.get("/", getAll);
 
-router.get("/", [verifyAccessToken, isAdmin], getAll);
-
-// router.get("/list", getList);
-
-// router.get("/:Username", getById);
-
-// router.put("/:Username", update);
-
-router.delete("/:Username", [verifyAccessToken, isAdmin], remove);
+router.delete("/delete/:id", [verifyAccessToken, isAdmin], remove);
 
 router.post("/register", register);
 
@@ -46,7 +34,7 @@ router.post("/loginAdmin", [verifyAccessToken, isAdmin], login);
 
 // router.post("/login", [isAdmin], login);
 
-router.get("/current", verifyAccessToken, getCurrent);
+router.get("/accesstoken", verifyAccessToken, getAccessToken);
 
 router.post("/refreshtoken", verifyRefreshToken, refreshAccessToken);
 

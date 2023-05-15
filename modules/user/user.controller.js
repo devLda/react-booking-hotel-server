@@ -90,7 +90,7 @@ const finalRegister = async (req, res) => {
     const { token } = req.params;
     if (!cookie || cookie?.dataregister?.token !== token) {
       res.clearCookie("dataregister");
-      return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`);
+      return res.redirect(`${process.env.URL_USER}/final-register/failed`);
     }
     const newUser = await User.create({
       Email: cookie?.dataregister?.Email,
@@ -100,8 +100,8 @@ const finalRegister = async (req, res) => {
     });
     res.clearCookie("dataregister");
     if (newUser)
-      return res.redirect(`${process.env.URL_CLIENT}/final-register/success`);
-    else return res.redirect(`${process.env.URL_CLIENT}/final-register/failed`);
+      return res.redirect(`${process.env.URL_USER}/final-register/success`);
+    else return res.redirect(`${process.env.URL_USER}/final-register/failed`);
   } catch (err) {
     console.error("User creation failed: " + err);
     // const { status, message } = errorHandler(err, res, req);
@@ -226,7 +226,7 @@ const forgotPassword = async (req, res) => {
 
     const html = `<p style="font-size: 16px;">Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn. 
     Link này sẽ hết hạn sau 15 phút kể từ bây giờ.
-    <a href=${process.env.URL_CLIENT}/reset-password/${resetToken}>Click here</a>
+    <a href=${process.env.URL_USER}/reset-password/${resetToken}>Click here</a>
     </p>`;
 
     const data = {
@@ -284,7 +284,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-const getCurrent = async (req, res) => {
+const getAccessToken = async (req, res) => {
   try {
     const { _id } = req.User;
 
@@ -322,9 +322,12 @@ const create = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    const result = await User.find().select("-refreshToken -Password -Role");
+    const result = await User.find().select("-refreshToken -Password");
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: result ? true : false,
+      user: result ? result : "Đã xảy ra lỗi",
+    });
   } catch (err) {
     console.error("User getAll failed: " + err);
     // const { status, message } = errorHandler(err);
@@ -421,7 +424,7 @@ module.exports = {
   logout,
   forgotPassword,
   resetPassword,
-  getCurrent,
+  getAccessToken,
   create,
   getAll,
   getById,

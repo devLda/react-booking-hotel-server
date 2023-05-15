@@ -4,26 +4,32 @@ const asyncHandler = require("express-async-handler");
 
 const create = async (req, res) => {
   try {
-    const { IDLoaiPhong } = req.body;
+    console.log(req.files);
 
-    if (!IDLoaiPhong)
-      return res.status(400).json({
-        success: false,
-        mes: "Missing input",
-      });
+    return res.status(200).json({
+      mes: "Ok",
+    });
 
-    const item = await Loaiphong.findOne({ IDLoaiPhong });
+    // const { IDLoaiPhong } = req.params;
 
-    if (item) throw new Error("Loại phòng đã tồn tại");
-    else {
-      const data = req.body;
-      data.TienNghi = req.body.TienNghi.split(",");
-      const newLoai = await Loaiphong.create(data);
-      return res.status(200).json({
-        success: newLoai ? true : false,
-        mes: newLoai,
-      });
-    }
+    // if (!IDLoaiPhong)
+    //   return res.status(400).json({
+    //     success: false,
+    //     mes: "Missing input",
+    //   });
+
+    // const item = await Loaiphong.findOne({ IDLoaiPhong });
+
+    // if (item) throw new Error("Loại phòng đã tồn tại");
+    // else {
+    //   const data = req.body;
+    //   data.TienNghi = req.body.TienNghi.split(",");
+    //   const newLoai = await Loaiphong.create(data);
+    //   return res.status(200).json({
+    //     success: newLoai ? true : false,
+    //     mes: newLoai,
+    //   });
+    // }
   } catch (err) {
     console.error("Loaiphong creation failed: " + err);
     errorHandler(err, res, req);

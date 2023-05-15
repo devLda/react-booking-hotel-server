@@ -3,18 +3,13 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const PhongSchema = new mongoose.Schema(
   {
-    IDPhong: {
-      type: String,
-      unique: true,
-      required: true,
-    },
-    IDLoaiPhong: {
+    LoaiPhong: {
       type: mongoose.Types.ObjectId,
       ref: "LoaiPhong",
     },
-    IDTang: {
-      type: mongoose.Types.ObjectId,
-      ref: "Tang",
+    Tang: {
+      type: String,
+      required: true,
     },
     images: {
       type: Array,
@@ -23,9 +18,8 @@ const PhongSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    TinhTrang: {
-      type: Boolean,
-      required: true,
+    LichDat: {
+      type: Array,
     },
     DienTich: {
       type: Number,

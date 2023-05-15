@@ -3,16 +3,11 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const DatPhongSchema = new mongoose.Schema(
   {
-    IDDatPhong: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    IDPhong: {
+    Phong: {
       type: mongoose.Types.ObjectId,
       ref: "Phong",
     },
-    IDThongTinKH: {
+    ThongTinKH: {
       type: mongoose.Types.ObjectId,
       ref: "ThongTinKH",
     },
@@ -24,7 +19,7 @@ const DatPhongSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    TrangThaiDat: {
+    TrangThai: {
       type: Boolean,
       default: false,
     },

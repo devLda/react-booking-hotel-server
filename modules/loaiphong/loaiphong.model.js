@@ -3,14 +3,10 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const LoaiPhongSchema = new mongoose.Schema(
   {
-    IDLoaiPhong: {
-      type: String,
-      required: true,
-      unique: true,
-    },
     TenLoaiPhong: {
       type: String,
       required: true,
+      unique: true,
     },
     MoTa: {
       type: String,

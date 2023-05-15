@@ -11,7 +11,7 @@ const {
 const router = express.Router();
 const uploader = require("../../configs/cloudinary.config");
 
-router.post("/add", create);
+router.post("/add", uploader.single("File"), create);
 
 router.get("/", getAll);
 

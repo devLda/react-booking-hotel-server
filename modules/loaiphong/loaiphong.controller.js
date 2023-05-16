@@ -1,13 +1,31 @@
 const Loaiphong = require("./loaiphong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
+const cloudinary = require("../../configs/cloudinary.config");
 
 const create = async (req, res) => {
   try {
-    console.log(req.files);
+    const { TenLoaiPhong, MoTa, image } = req.body;
+
+    if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
+
+    if (!image) throw new Error("Vui lòng tải lại ảnh");
+
+    const arrImages = image.split("@@@");
+
+    const upload = await cloudinary.uploader.upload(arrImages, {
+      folder: "AnhOctHotel",
+    });
+
+    // const newLP = await Loaiphong.create({
+    //   TenLoaiPhong,
+    //   MoTa,
+    //   $push: { images: {} }
+    // })
 
     return res.status(200).json({
-      mes: "Ok",
+      success: upload ? true : false,
+      mes: upload.secure_url,
     });
 
     // const { IDLoaiPhong } = req.params;

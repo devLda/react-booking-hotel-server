@@ -9,9 +9,9 @@ const {
   uploadImage,
 } = require("./loaiphong.controller");
 const router = express.Router();
-const uploader = require("../../configs/cloudinary.config");
+// const uploader = require("../../configs/cloudinary.config");
 
-router.post("/add", uploader.single("File"), create);
+router.post("/add", create);
 
 router.get("/", getAll);
 
@@ -23,6 +23,6 @@ router.put("/update/:id", update);
 
 router.delete("/delete/:id", remove);
 
-router.put("/uploadimage/:pid", uploader.array("images", 3), uploadImage);
+// router.put("/uploadimage/:pid", uploader.array("images", 3), uploadImage);
 
 module.exports = router;

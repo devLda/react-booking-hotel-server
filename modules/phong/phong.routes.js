@@ -9,9 +9,9 @@ const {
   getMultiAllData,
 } = require("./phong.controller");
 const router = express.Router();
-const uploader = require("../../configs/cloudinary.config");
+// const uploader = require("../../configs/cloudinary.config");
 
-router.post("/add", uploader.array("images", 3), create);
+// router.post("/add", uploader.array("images", 3), create);
 
 router.get("/", getAll);
 

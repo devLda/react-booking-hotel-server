@@ -11,13 +11,8 @@ const DatPhongSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "ThongTinKH",
     },
-    NgayBatDau: {
-      type: Date,
-      required: true,
-    },
-    NgayKetThuc: {
-      type: Date,
-      required: true,
+    LichDat: {
+      type: Array,
     },
     TrangThai: {
       type: Boolean,

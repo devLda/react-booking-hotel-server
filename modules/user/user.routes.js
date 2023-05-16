@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getAll,
+  getUser,
   remove,
   register,
   login,
@@ -10,6 +11,9 @@ const {
   resetPassword,
   forgotPassword,
   finalRegister,
+  removeList,
+  create,
+  update,
 } = require("./user.controller");
 
 const {
@@ -22,7 +26,9 @@ const router = express.Router();
 
 router.get("/", getAll);
 
-router.delete("/delete/:id", [verifyAccessToken, isAdmin], remove);
+router.get("/get/:Email", getUser);
+
+router.post('/create', create)
 
 router.post("/register", register);
 
@@ -43,5 +49,13 @@ router.get("/logout", logout);
 router.post("/forgotpassword", forgotPassword);
 
 router.put("/resetpassword", resetPassword);
+
+// router.delete("/delete/:id", [verifyAccessToken, isAdmin], remove);
+
+router.delete("/delete/:Email", remove);
+
+router.get("/delete/list", removeList)
+
+router.put("/update/:Email", update)
 
 module.exports = router;

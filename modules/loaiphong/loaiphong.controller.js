@@ -43,7 +43,7 @@ const getAll = async (req, res) => {
 
     return res.status(200).json({
       success: result ? true : false,
-      loaiphong: result,
+      data: result,
     });
   } catch (err) {
     console.error("Loaiphong getAll failed: " + err);

@@ -8,6 +8,7 @@ const sendMail = require("../../utils/sendMail");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const makeToken = require("uniqid");
+const asyncHandler = require('express-async-handler')
 
 //Dang ky thuong
 // const register = async (req, res) => {
@@ -303,22 +304,25 @@ const getAccessToken = async (req, res) => {
   }
 };
 
-const create = async (req, res) => {
-  try {
-    const data = req.body;
-    data.GioiTinh = req.body.GioiTinh === "Male" ? true : false;
-    data.NgaySinh = req.body.NgaySinh ? new Date(req.body.NgaySinh) : null;
-    console.log("body data ", data);
-    const item = new User(data);
-    const result = await item.save();
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("User creation failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
+const create = asyncHandler(async (req, res) => {
+  const { HoVaTen, Password, Email, SDT } = req.body;
+    if (!HoVaTen || !Password || !Email || !SDT)
+      return res.status(400).json({
+        success: false,
+        mes: "Vui lòng nhập đủ các trường",
+      });
+
+    const user = await User.findOne({ Email });
+
+    if (user) throw new Error("Email đã được đăng ký bởi một tài khoản khác");
+    else {
+      const newUser = await User.create(req.body)
+      return res.status(200).json({
+        success: newUser ? true : false,
+        mes: newUser ? "Tạo mới tài khoản thành công" : "Đã có lỗi xảy ra"
+      });
+    }
+});
 
 const getAll = async (req, res) => {
   try {
@@ -335,6 +339,16 @@ const getAll = async (req, res) => {
     // res.status(status).json({ message, entity: "User" });
   }
 };
+
+const getUser = asyncHandler(async(req, res) => {
+  const {Email} = req.params;
+  if(!Email) throw new Error('Không tồn tại người dùng')
+  const result = await User.findOne({Email}).select("-Password -_id")
+  return res.status(200).json({
+    success: result ? true : false,
+    mes: result ? result : "Không tìm thấy người dùng"
+  })
+})
 
 const getById = async (req, res) => {
   try {
@@ -376,45 +390,40 @@ const getList = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
-  try {
-    const { Username } = req.body;
-    const data = req.body;
-    data.GioiTinh = req.body.GioiTinh === "Male" ? true : false;
-    data.NgaySinh = new Date(data.NgaySinh);
-    const result = await User.findOneAndUpdate({ Username: Username }, data, {
-      new: true,
+const update = asyncHandler(async (req, res) => {
+  const { Email } = req.body;
+
+    if (!Email) throw new Error("Không tìm thấy người dùng!");
+
+    const response = await User.findOneAndUpdate({ Email: Email }, req.body, {
+      new: false,
     });
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("User update failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
+    return res.status(200).json({
+      success: response ? true : false,
+      mes: response ? "Cập nhật người dùng thành công" : "Đã xảy ra lỗi"
+    });
+});
 
-const remove = async (req, res) => {
-  try {
-    const { _id } = req.query;
+const remove = asyncHandler(async (req, res) => {
+    const { Email } = req.params;
 
-    if (!_id) throw new Error("Đầu vào bị thiếu!");
+    if (!Email) throw new Error("Không tìm thấy người dùng!");
 
-    const response = await User.deleteOne({ Username: Username });
+    const response = await User.findOneAndDelete({ Email: Email });
     return res.status(200).json({
       success: response ? true : false,
       mes: response
-        ? `Tài khoản với email ${response.Email} đã được xoá thành công`
-        : "Không có tài khoản được xoá",
+        ? `Tài khoản với email ${Email} đã được xoá thành công`
+        : "Đã xảy ra lỗi",
     });
-  } catch (err) {
-    console.error("User delete failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
+});
+
+const removeList = asyncHandler( async (req, res) => {
+  console.log(req.query)
+  console.log(req.params)
+  console.log(req.body)
+})
 
 module.exports = {
   register,
@@ -427,8 +436,10 @@ module.exports = {
   getAccessToken,
   create,
   getAll,
+  getUser,
   getById,
   getList,
   update,
   remove,
+  removeList,
 };

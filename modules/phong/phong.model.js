@@ -17,10 +17,7 @@ const PhongSchema = new mongoose.Schema(
     SoNguoi: {
       type: Number,
       required: true,
-    },
-    LichDat: {
-      type: Array,
-    },
+    }, 
     DienTich: {
       type: Number,
       required: true,

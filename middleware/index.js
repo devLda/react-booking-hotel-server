@@ -19,6 +19,7 @@ const globalMiddelwares = (app, dir) => {
   app.use(cookieParser());
 
   app.use("/api/user", require("../modules/user"));
+  app.use("/api/account", require("../modules/account"));
   app.use("/api/loaiphong", require("../modules/loaiphong"));
   app.use("/api/phong", require("../modules/phong"));
   app.use("/api/datphong", require("../modules/datphong"));

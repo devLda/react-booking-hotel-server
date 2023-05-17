@@ -2,27 +2,28 @@ const express = require("express");
 const {
   create,
   getAll,
-  getById,
+  getLP,
   getList,
   update,
   remove,
   uploadImage,
 } = require("./loaiphong.controller");
 const router = express.Router();
-// const uploader = require("../../configs/cloudinary.config");
+const uploader = require("../../configs/cloudinary.config");
+const { verifyAccessToken, isAdmin } = require("../../middleware/verifyToken");
 
-router.post("/add", create);
+router.post("/add", [verifyAccessToken, isAdmin], create);
 
-router.get("/", getAll);
+router.get("/", [verifyAccessToken, isAdmin], getAll);
 
-router.get("/list", getList);
+router.get("/list", [verifyAccessToken, isAdmin], getList);
 
-router.get("/id/:id", getById);
+router.get("/get/:TenLoaiPhong", getLP);
 
-router.put("/update/:id", update);
+router.put("/update/:TenLoaiPhong", [verifyAccessToken, isAdmin], update);
 
-router.delete("/delete/:id", remove);
+router.delete("/delete/:TenLoaiPhong", [verifyAccessToken, isAdmin], remove);
 
-// router.put("/uploadimage/:pid", uploader.array("images", 3), uploadImage);
+router.put("/uploadimage/:TenLoaiPhong", uploadImage);
 
 module.exports = router;

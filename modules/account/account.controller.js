@@ -1,4 +1,4 @@
-const User = require("./user.model");
+const User = require("../user/user.model");
 const errorHandler = require("../../utils/errorHandler");
 const {
   generateAccessToken,
@@ -8,7 +8,7 @@ const sendMail = require("../../utils/sendMail");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const makeToken = require("uniqid");
-const asyncHandler = require("express-async-handler");
+const asyncHandler = require('express-async-handler')
 
 //Dang ky thuong
 // const register = async (req, res) => {
@@ -139,9 +139,60 @@ const login = async (req, res) => {
         maxAge: 60 * 60 * 1000,
         sameSite: "none",
       });
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 1000,
+      })
       return res.status(200).json({
         success: true,
-        accessToken,
+        userData,
+      });
+    } else {
+      throw new Error("Thông tin tài khoản hoặc mật khẩu không chính xác");
+    }
+  } catch (err) {
+    console.error("Đăng nhập thất bại: " + err);
+    // const { status, message } = errorHandler(err, res, req);
+    errorHandler(err, res, req);
+    // res.status(status).json({ message, entity: "User" });
+  }
+};
+
+const loginAdmin = async (req, res) => {
+  try {
+    const { Email, Password } = req.body;
+    if (!Password || !Email)
+      return res.status(400).json({
+        success: false,
+        mes: "Nhập thiếu trường dữ liệu",
+      });
+
+    const response = await User.findOne({ Email });
+    if (response && (await response.isCorrectPassword(Password))) {
+      const { Password, Role, refreshToken, ...userData } = response.toObject();
+      if( Role !== 'admin') throw new Error('Vui lòng đăng nhập bằng tài khoản admin')
+      const accessToken = generateAccessToken(response._id, Role);
+      const newRefreshToken = generateRefreshToken(response._id);
+      //Luu refresh token
+      await User.findByIdAndUpdate(
+        response._id,
+        { refreshToken: newRefreshToken },
+        { new: true }
+      );
+      res.cookie("refreshToken ", newRefreshToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 1000,
+        sameSite: "none",
+      });
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 60 * 1000,
+      })
+      return res.status(200).json({
+        success: true,
         userData,
       });
     } else {
@@ -201,6 +252,10 @@ const logout = async (req, res) => {
     );
     //Xoa refresh token o cookie
     res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+    });
+    res.clearCookie("accessToken", {
       httpOnly: true,
       secure: true,
     });
@@ -287,14 +342,13 @@ const resetPassword = async (req, res) => {
 
 const getAccessToken = async (req, res) => {
   try {
-    const { _id } = req.User;
+    // const { _id } = req.User;
 
-    const user = await User.findById(_id).select(
-      "-refreshToken -Password -Role"
-    );
+    // const user = await User.findById(_id).select(
+    //   "-refreshToken -Password -Role"
+    // );
     return res.status(200).json({
-      success: user ? true : false,
-      mes: user ? user : "Không tìm thấy người dùng",
+      success: true,
     });
   } catch (err) {
     console.error("Lấy user thất bại: " + err);
@@ -304,142 +358,19 @@ const getAccessToken = async (req, res) => {
   }
 };
 
-const create = asyncHandler(async (req, res) => {
-  const { HoVaTen, Password, Email, SDT } = req.body;
-  if (!HoVaTen || !Password || !Email || !SDT)
-    return res.status(400).json({
-      success: false,
-      mes: "Vui lòng nhập đủ các trường",
-    });
-
-  const user = await User.findOne({ Email });
-
-  if (user) throw new Error("Email đã được đăng ký bởi một tài khoản khác");
-  else {
-    const newUser = await User.create(req.body);
-    return res.status(200).json({
-      success: newUser ? true : false,
-      mes: newUser ? "Tạo mới tài khoản thành công" : "Đã có lỗi xảy ra",
-    });
-  }
-});
-
-const getAll = async (req, res) => {
-  try {
-    const result = await User.find().select("-refreshToken -Password");
-
-    return res.status(200).json({
-      success: result ? true : false,
-      user: result ? result : "Đã xảy ra lỗi",
-    });
-  } catch (err) {
-    console.error("User getAll failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
-
-const getUser = asyncHandler(async (req, res) => {
-  const { Email } = req.params;
-  if (!Email) throw new Error("Không tồn tại người dùng");
-  const result = await User.findOne({ Email }).select("-Password -_id");
-  return res.status(200).json({
-    success: result ? true : false,
-    mes: result ? result : "Không tìm thấy người dùng",
-  });
-});
-
-const getById = async (req, res) => {
-  try {
-    const { Username } = req.params;
-    console.log(Username);
-    const result = await User.findOne({ Username: Username });
-
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("User getById failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
-
-const getList = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, sortField, sortOrder } = req.query;
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: {},
-    };
-
-    if (sortField && sortOrder) {
-      options.sort = {
-        [sortField]: sortOrder,
-      };
-    }
-
-    const result = await User.paginate({}, options);
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("User list failed: " + err);
-    // const { status, message } = errorHandler(err);
-    errorHandler(err);
-    // res.status(status).json({ message, entity: "User" });
-  }
-};
-
-const update = asyncHandler(async (req, res) => {
-  const { Email } = req.body;
-
-  if (!Email) throw new Error("Không tìm thấy người dùng!");
-
-  const response = await User.findOneAndUpdate({ Email: Email }, req.body, {
-    new: true,
-  });
-
-  return res.status(200).json({
-    success: response ? true : false,
-    mes: response ? "Cập nhật người dùng thành công" : "Đã xảy ra lỗi",
-  });
-});
-
-const remove = asyncHandler(async (req, res) => {
-  const { Email } = req.params;
-
-  if (!Email) throw new Error("Không tìm thấy người dùng!");
-
-  const response = await User.findOneAndDelete({ Email: Email });
-  return res.status(200).json({
-    success: response ? true : false,
-    mes: response
-      ? `Tài khoản với email ${Email} đã được xoá thành công`
-      : "Đã xảy ra lỗi",
-  });
-});
-
-const removeList = asyncHandler(async (req, res) => {
-  console.log(req.query);
-  console.log(req.params);
-  console.log(req.body);
-});
+const auth = asyncHandler((req, res) => {
+  console.log(req)
+})
 
 module.exports = {
   register,
   finalRegister,
   login,
+  loginAdmin,
+  auth,
   refreshAccessToken,
   logout,
   forgotPassword,
   resetPassword,
   getAccessToken,
-  create,
-  getAll,
-  getUser,
-  getById,
-  getList,
-  update,
-  remove,
-  removeList,
 };

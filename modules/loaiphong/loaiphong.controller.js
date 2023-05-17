@@ -3,56 +3,26 @@ const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 const cloudinary = require("../../configs/cloudinary.config");
 
-const create = async (req, res) => {
-  try {
-    const { TenLoaiPhong, MoTa, image } = req.body;
+const create = asyncHandler(async (req, res) => {
+  const { TenLoaiPhong } = req.body;
 
-    if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
+  if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
 
-    if (!image) throw new Error("Vui lòng tải lại ảnh");
+  const item = await Loaiphong.findOne({ TenLoaiPhong });
 
-    const arrImages = image.split("@@@");
+  if (item) throw new Error("Loại phòng đã tồn tại");
+  else {
+    const data = req.body;
 
-    const upload = await cloudinary.uploader.upload(arrImages, {
-      folder: "AnhOctHotel",
-    });
+    data.TienNghi = req.body.TienNghi.split(",");
 
-    // const newLP = await Loaiphong.create({
-    //   TenLoaiPhong,
-    //   MoTa,
-    //   $push: { images: {} }
-    // })
-
+    const newLoai = await Loaiphong.create(data);
     return res.status(200).json({
-      success: upload ? true : false,
-      mes: upload.secure_url,
+      success: newLoai ? true : false,
+      mes: newLoai ? newLoai : "Đã xảy ra lỗi",
     });
-
-    // const { IDLoaiPhong } = req.params;
-
-    // if (!IDLoaiPhong)
-    //   return res.status(400).json({
-    //     success: false,
-    //     mes: "Missing input",
-    //   });
-
-    // const item = await Loaiphong.findOne({ IDLoaiPhong });
-
-    // if (item) throw new Error("Loại phòng đã tồn tại");
-    // else {
-    //   const data = req.body;
-    //   data.TienNghi = req.body.TienNghi.split(",");
-    //   const newLoai = await Loaiphong.create(data);
-    //   return res.status(200).json({
-    //     success: newLoai ? true : false,
-    //     mes: newLoai,
-    //   });
-    // }
-  } catch (err) {
-    console.error("Loaiphong creation failed: " + err);
-    errorHandler(err, res, req);
   }
-};
+});
 
 const getAll = async (req, res) => {
   try {
@@ -69,17 +39,17 @@ const getAll = async (req, res) => {
   }
 };
 
-const getById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Loaiphong.findById(id);
+const getLP = asyncHandler(async (req, res) => {
+  const { TenLoaiPhong } = req.params;
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Loaiphong getById failed: " + err);
-    errorHandler(err, res, req);
-  }
-};
+  if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
+
+  const result = await Loaiphong.findOne({ TenLoaiPhong });
+  return res.status(200).json({
+    success: result ? true : false,
+    mes: result ? result : "Đã xảy ra lỗi",
+  });
+});
 
 const getList = async (req, res) => {
   try {
@@ -104,19 +74,28 @@ const getList = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Loaiphong.findOneAndUpdate({ _id: id }, req.body, {
-      new: true,
-    });
+const update = asyncHandler(async (req, res) => {
+  const { TenLoaiPhong } = req.body;
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Loaiphong update failed: " + err);
-    errorHandler(err, res, req);
-  }
-};
+  if (!TenLoaiPhong) throw new Error("Không tìm thấy loại phòng!");
+
+  const data = req.body;
+
+  data.TienNghi = req.body.TienNghi.split(",");
+
+  const response = await Loaiphong.findOneAndUpdate(
+    { TenLoaiPhong: TenLoaiPhong },
+    data,
+    {
+      new: true,
+    }
+  );
+
+  return res.status(200).json({
+    success: response ? true : false,
+    mes: response ? response : "Đã xảy ra lỗi",
+  });
+});
 
 const remove = async (req, res) => {
   try {
@@ -131,25 +110,26 @@ const remove = async (req, res) => {
 };
 
 const uploadImage = asyncHandler(async (req, res) => {
-  const { pid } = req.params;
-  if (!req.files) throw new Error("Ảnh bị lỗi!!!");
-  const response = await Loaiphong.findByIdAndUpdate(
-    pid,
-    {
-      $push: { images: { $each: req.files.map((el) => el.path) } },
-    },
-    { new: true }
-  );
-  return res.status(200).json({
-    status: response ? true : false,
-    updateProduct: response ? response : "Không thể upload ảnh",
-  });
+  const { TenLoaiPhong } = req.params;
+  console.log(req.body);
+  // if (!req.file) throw new Error("Ảnh bị lỗi!!!");
+  // const response = await Loaiphong.findByIdAndUpdate(
+  //   TenLoaiPhong,
+  //   {
+  //     images: req.file.path,
+  //   },
+  //   { new: true }
+  // );
+  // return res.status(200).json({
+  //   status: response ? true : false,
+  //   mes: response ? response : "Không thể upload ảnh",
+  // });
 });
 
 module.exports = {
   create,
   getAll,
-  getById,
+  getLP,
   getList,
   update,
   remove,

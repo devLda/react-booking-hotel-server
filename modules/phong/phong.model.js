@@ -26,6 +26,9 @@ const PhongSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    LichDat: {
+      type: Array,
+    },
   },
   {
     timestamps: true,

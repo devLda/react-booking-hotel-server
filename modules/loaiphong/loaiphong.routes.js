@@ -14,9 +14,9 @@ const { verifyAccessToken, isAdmin } = require("../../middleware/verifyToken");
 
 router.post("/add", [verifyAccessToken, isAdmin], create);
 
-router.get("/", [verifyAccessToken, isAdmin], getAll);
+router.get("/", getAll);
 
-router.get("/list", [verifyAccessToken, isAdmin], getList);
+router.get("/list", getList);
 
 router.get("/get/:TenLoaiPhong", getLP);
 
@@ -24,6 +24,6 @@ router.put("/update/:TenLoaiPhong", [verifyAccessToken, isAdmin], update);
 
 router.delete("/delete/:TenLoaiPhong", [verifyAccessToken, isAdmin], remove);
 
-router.put("/uploadimage/:TenLoaiPhong", uploadImage);
+router.put("/uploadimage", uploader.single("images") ,uploadImage);
 
 module.exports = router;

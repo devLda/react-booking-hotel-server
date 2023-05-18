@@ -110,8 +110,8 @@ const remove = async (req, res) => {
 };
 
 const uploadImage = asyncHandler(async (req, res) => {
-  const { TenLoaiPhong } = req.params;
-  console.log(req.body);
+  // const { TenLoaiPhong } = req.params;
+  console.log(req.file);
   // if (!req.file) throw new Error("Ảnh bị lỗi!!!");
   // const response = await Loaiphong.findByIdAndUpdate(
   //   TenLoaiPhong,

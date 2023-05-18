@@ -10,10 +10,7 @@ const DatPhongSchema = new mongoose.Schema(
     ThongTinKH: {
       type: mongoose.Types.ObjectId,
       ref: "ThongTinKH",
-    },
-    LichDat: {
-      type: Array,
-    },
+    }, 
     TrangThai: {
       type: Boolean,
       default: false,

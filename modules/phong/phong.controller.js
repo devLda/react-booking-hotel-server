@@ -3,39 +3,25 @@ const LoaiPhong = require("../loaiphong/loaiphong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
-const create = async (req, res) => {
-  try {
-    const { IDPhong, IDLoaiPhong } = req.body;
+const create = asyncHandler(async (req, res) => {
+  const { LoaiPhong, Tang } = req.body;
 
-    if (!req.files) throw new Error("Ảnh bị lỗi!!!");
+  if (!LoaiPhong || !Tang)
+    return res.status(400).json({
+      success: false,
+      mes: "Dữ liệu đầu vào bị lỗi!!!",
+    });
 
-    if (!IDPhong || !IDLoaiPhong)
-      return res.status(400).json({
-        success: false,
-        mes: "Dữ liệu đầu vào bị lỗi!!!",
-      });
+  const loaiphong = await LoaiPhong.findById(LoaiPhong);
 
-    const phong = await Phong.findOne({ IDPhong });
-    const loaiphong = await LoaiPhong.findById(IDLoaiPhong);
+  if (!loaiphong) throw new Error("Loại phòng không tồn tại");
 
-    if (!loaiphong) throw new Error("Loại phòng không tồn tại");
-
-    if (phong) throw new Error("Phòng đã tồn tại");
-    else {
-      const data = req.body;
-      data.images = req.files.map((item) => item.path);
-
-      const newPhong = await Phong.create(data);
-      return res.status(200).json({
-        success: newPhong ? true : false,
-        mes: newPhong ? newPhong : "Đã xảy ra lỗi!!!",
-      });
-    }
-  } catch (err) {
-    console.error("Phong creation failed: " + err);
-    errorHandler(err, res, req);
-  }
-};
+  const newPhong = await Phong.create(req.body);
+  return res.status(200).json({
+    success: newPhong ? true : false,
+    mes: newPhong ? newPhong : "Đã xảy ra lỗi!!!",
+  });
+});
 
 const getAll = asyncHandler(async (req, res) => {
   let query = req.query || {};

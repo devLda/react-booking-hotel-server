@@ -32,9 +32,9 @@ const uploadCloud = multer({
       return cb(new Error("Chỉ cho phép định dạng .png .jpg .jpeg"));
     }
   },
-  limits: {
-    fileSize: maxSize,
-  },
+  // limits: {
+  //   fileSize: maxSize,
+  // },
 });
 
 module.exports = uploadCloud;

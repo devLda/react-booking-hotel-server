@@ -1,20 +1,15 @@
 const Datphong = require("./datphong.model");
 const errorHandler = require("../../utils/errorHandler");
+const asyncHandler = require("express-async-handler");
 
-module.exports.create = async (req, res) => {
-  try {
-    console.log("body ", req.body);
-    console.log("params ", req.params);
-    console.log("query ", req.query);
-    return res.status(200).json({
-      mes: "Ok",
-    });
-  } catch (err) {
-    console.error("Datphong creation failed: " + err);
-    const { status, message } = errorHandler(err);
-    res.status(status).json({ message, entity: "Datphong" });
-  }
-};
+module.exports.create = asyncHandler(async (req, res) => {
+  console.log("body ", req.body);
+  console.log("params ", req.params);
+  console.log("query ", req.query);
+  return res.status(200).json({
+    mes: "Ok",
+  });
+});
 
 module.exports.getAll = async (req, res) => {
   try {

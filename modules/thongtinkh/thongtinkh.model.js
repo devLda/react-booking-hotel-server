@@ -3,9 +3,8 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const ThongTinKHSchema = new mongoose.Schema(
   {
-    HoaDon: {
-      type: mongoose.Types.ObjectId,
-      ref: "HoaDon"
+    GiaoDich: {
+      type: Array,
     },
     Email: {
       type: String,

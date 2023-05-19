@@ -16,7 +16,7 @@ module.exports.create = asyncHandler(async (req, res) => {
     NgayBatDau,
     NgayKetThuc,
     TongNgay,
-    TongTien,
+    MaPhong,
     DaThanhToan,
     TenKH,
     SDT,
@@ -46,23 +46,48 @@ module.exports.create = asyncHandler(async (req, res) => {
       throw new Error("Thiếu dữ liệu đầu vào!!!");
 
     const findPhong = await PhongMD.findById(Phong);
+
+    const findKH = await ThongTinKH.findOne({
+      Email: Email,
+      TenKH: TenKH,
+      SDT: SDT,
+    });
     if (!findPhong) throw new Error("Không tìm thấy phòng đã chọn");
     else {
-      const newKH = new ThongTinKH({
-        GiaoDich: payment.id,
-        Email: Email,
-        TenKH: TenKH,
-        SDT: SDT,
-      });
-      const KH = await newKH.save();
+      let KH;
+      if (findKH) {
+        const updateKH = await ThongTinKH.findOne({
+          Email: Email,
+          TenKH: TenKH,
+          SDT: SDT,
+        });
+        updateKH.GiaoDich.push({
+          MaGD: payment.id,
+          NgayGD: moment().format("hh:mm:ss DD-MM-YYYY"),
+          SoTien: DaThanhToan,
+        });
+        KH = await updateKH.save();
+      } else {
+        const newKH = new ThongTinKH({
+          GiaoDich: {
+            MaGD: payment.id,
+            NgayGD: moment().format("hh:mm:ss DD-MM-YYYY"),
+            SoTien: DaThanhToan,
+          },
+          Email: Email,
+          TenKH: TenKH,
+          SDT: SDT,
+        });
+        KH = await newKH.save();
+      }
 
       const newBook = new Datphong({
         Phong: Phong,
         ThongTinKH: KH._id,
-        GiaoDich: payment.id,
         NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
         NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
         TongNgay: TongNgay,
+        TrangThai: "Booked",
       });
 
       const booking = await newBook.save();
@@ -79,25 +104,26 @@ module.exports.create = asyncHandler(async (req, res) => {
       await roomtemp.save();
 
       const html = `<p style="font-size: 16px;">
-          Xin chào quý khách hàng
-        Cảm ơn quý khách hàng đã sử dụng dịch vụ của khách sạn chúng tôi – Anh Oct Hotel.
-        Chúng tôi rất hân hạnh xác nhận rằng quý đã đặt 1 phòng đơn từ ngày ${NgayBatDau} đến ${NgayKetThuc}
-        và quý khách đã thanh toán 30% số tiền đặt cọc. Email này là xác thực của quý khách khi check-in
-        Nếu có bất cứ thắc mắc gì vui lòng liên hệ với chúng tôi qua số máy: +849028888888
-        Chúng tôi mong đợi được đón tiếp quý khách.
-          Trân trọng.
-    </p>`;
+        Kính chào quý khách hàng ${TenKH},<br/>
+      Cảm ơn quý khách hàng đã đặt phòng tại khách sạn chúng tôi – Anh Oct Luxury Hotel.<br/>
+      Chúng tôi xác nhận rằng quý đã đặt 1 phòng với số phòng <b> ${MaPhong} </b> từ ngày <b> ${NgayBatDau} </b> đến <b> ${NgayKetThuc} </b>
+      và quý khách đã thanh toán <b> ${DaThanhToan} $ </b> tương ứng với 30% số tiền đặt cọc. Email này là xác thực của quý khách khi check-in.<br/>
+      Nếu có bất cứ thắc mắc gì vui lòng liên hệ với chúng tôi qua số máy: +84988888888.<br/>
+      Chúng tôi mong đợi được đón tiếp quý khách.<br/>
+        Trân trọng.<br/>
+        <i> AnhOct Luxury Hotel </i>
+  </p>`;
 
       const data = {
         Email,
         html,
-        subject: "Xác nhận đặt phòng - AnhOct Hotel",
+        subject: "Xác nhận đặt phòng - AnhOct Luxury Hotel",
       };
 
       const rs = await sendMail(data);
       return res.status(200).json({
-        success: booking ? true : false,
-        mes: booking ? booking : "Đã xảy ra lỗi!!!",
+        success: newBook ? true : false,
+        mes: newBook ? booking : "Đã xảy ra lỗi!!!",
       });
     }
   }

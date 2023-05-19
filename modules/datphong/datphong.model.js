@@ -11,10 +11,6 @@ const DatPhongSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "ThongTinKH",
     },
-    GiaoDich: {
-      type: mongoose.Types.ObjectId,
-      ref: "GiaoDich",
-    },
     NgayBatDau: {
       type: String,
       required: true,

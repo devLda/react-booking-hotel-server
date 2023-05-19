@@ -1,31 +1,21 @@
 const Thongtinkh = require("./thongtinkh.model");
 const errorHandler = require("../../utils/errorHandler");
+const asyncHandler = require("express-async-handler");
 
-module.exports.create = async (req, res) => {
-  try {
-    const { Email } = req.body;
+module.exports.create = asyncHandler(async (req, res) => {
+  const { Email } = req.body;
 
-    if (!Email)
-      return res.status(400).json({
-        success: false,
-        mes: "Missing input",
-      });
-
-    const KH = await Thongtinkh.findOne({ Email });
-
-    if (KH) throw new Error("Khách hàng đã tồn tại");
-    else {
-      const newKH = await Thongtinkh.create(req.body);
-      return res.status(200).json({
-        success: newKH ? true : false,
-        mes: newKH,
-      });
-    }
-  } catch (err) {
-    console.error("Thongtinkh creation failed: " + err);
-    errorHandler(err, res, req);
-  }
-};
+  if (!Email)
+    return res.status(400).json({
+      success: false,
+      mes: "Dữ liệu đầu vào bị lỗi",
+    });
+  const newKH = await Thongtinkh.create(req.body);
+  return res.status(200).json({
+    success: newKH ? true : false,
+    mes: newKH,
+  });
+});
 
 module.exports.getAll = async (req, res) => {
   try {

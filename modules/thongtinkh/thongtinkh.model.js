@@ -3,10 +3,13 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const ThongTinKHSchema = new mongoose.Schema(
   {
+    HoaDon: {
+      type: mongoose.Types.ObjectId,
+      ref: "HoaDon"
+    },
     Email: {
       type: String,
       required: true,
-      unique: true,
     },
     TenKH: {
       type: String,

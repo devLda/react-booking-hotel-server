@@ -27,8 +27,8 @@ const DatPhongSchema = new mongoose.Schema(
       type: Number,
     },
     TrangThai: {
-      type: Boolean,
-      default: false,
+      type: String,
+      default: "Pending",
     },
   },
   {

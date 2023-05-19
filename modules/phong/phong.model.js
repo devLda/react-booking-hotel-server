@@ -3,6 +3,10 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const PhongSchema = new mongoose.Schema(
   {
+    SoPhong: {
+      type: Number,
+      // required: true
+    },
     LoaiPhong: {
       type: mongoose.Types.ObjectId,
       ref: "LoaiPhong",

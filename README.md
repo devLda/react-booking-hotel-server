@@ -1,0 +1,1 @@
+mongoexport --uri mongodb+srv://blfngocrong:dhdnGaMuo93osrTp@clusterdatatest.qsargad.mongodb.net/<DATABASE> --collection <COLLECTION> --type <FILETYPE> --out <FILENAME>

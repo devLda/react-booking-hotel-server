@@ -2,13 +2,14 @@ const express = require("express");
 const {
   create,
   getAll,
-  getLP,
+  getHD,
   getList,
   update,
   remove,
   uploadSingleImage,
+  getHD_DP_KH,
   // uploadMultiImage,
-} = require("./loaiphong.controller");
+} = require("./hoadon.controller");
 const router = express.Router();
 const { verifyAccessToken, isAdmin } = require("../../middleware/verifyToken");
 
@@ -16,13 +17,13 @@ router.post("/add", [verifyAccessToken, isAdmin], create);
 
 router.get("/", getAll);
 
+router.get("/multidata", getHD_DP_KH);
+
 router.get("/list", getList);
 
-router.get("/get/:TenLoaiPhong", getLP);
+router.get("/get/:id", getHD);
 
-router.put("/update/:TenLoaiPhong", [verifyAccessToken, isAdmin], update);
-
-router.delete("/delete/:TenLoaiPhong", [verifyAccessToken, isAdmin], remove);
+router.put("/update/:id", [verifyAccessToken, isAdmin], update);
 
 router.post("/uploadimage", uploadSingleImage);
 

@@ -1,8 +1,9 @@
 const Thongtinkh = require("./thongtinkh.model");
+const HoaDon = require("../hoadon/hoadon.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
-module.exports.create = asyncHandler(async (req, res) => {
+const create = asyncHandler(async (req, res) => {
   const { Email } = req.body;
 
   if (!Email)
@@ -17,7 +18,7 @@ module.exports.create = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports.getAll = async (req, res) => {
+const getAll = async (req, res) => {
   try {
     let query = req.query || {};
     const result = await Thongtinkh.find(query);
@@ -29,7 +30,7 @@ module.exports.getAll = async (req, res) => {
   }
 };
 
-module.exports.getById = async (req, res) => {
+const getById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Thongtinkh.findById(id);
@@ -41,30 +42,30 @@ module.exports.getById = async (req, res) => {
   }
 };
 
-module.exports.getList = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, sortField, sortOrder } = req.query;
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: {},
-    };
+const getBooking = async (req, res) => {
+  const { Email } = req.params;
+  if (!Email) throw new Error("Đã có lỗi xảy ra");
 
-    if (sortField && sortOrder) {
-      options.sort = {
-        [sortField]: sortOrder,
-      };
-    }
+  const findKH = await Thongtinkh.findOne({ Email: Email });
 
-    const result = await Thongtinkh.paginate({}, options);
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Thongtinkh list failed: " + err);
-    errorHandler(err, res, req);
+  if (!findKH) {
+    return res.status(200).json({
+      success: true,
+      mes: "Bạn không có đơn đặt phòng nào",
+    });
+  } else {
+    const findHD = await HoaDon.find({ ThongTinKH: findKH._id }).populate(
+      "DatPhong",
+      "NgayBatDau NgayKetThuc"
+    );
+    return res.status(200).json({
+      success: findHD ? true : false,
+      data: findHD ? findHD : "Đã xảy ra lỗi",
+    });
   }
 };
 
-module.exports.update = async (req, res) => {
+const update = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Thongtinkh.findOneAndUpdate({ _id: id }, req.body, {
@@ -78,7 +79,7 @@ module.exports.update = async (req, res) => {
   }
 };
 
-module.exports.remove = async (req, res) => {
+const remove = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -88,4 +89,13 @@ module.exports.remove = async (req, res) => {
     console.error("Thongtinkh delete failed: " + err);
     errorHandler(err, res, req);
   }
+};
+
+module.exports = {
+  create,
+  getAll,
+  getById,
+  getBooking,
+  update,
+  remove,
 };

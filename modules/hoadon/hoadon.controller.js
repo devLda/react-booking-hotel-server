@@ -1,22 +1,18 @@
-const Loaiphong = require("./loaiphong.model");
+const HoaDon = require("./hoadon.model");
+const DatPhong = require("../datphong/datphong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
-const cloudinary = require("../../configs/cloudinary.config");
 
 const create = asyncHandler(async (req, res) => {
-  const { TenLoaiPhong } = req.body;
+  const { IDDatPhong, IDKH } = req.body;
 
-  if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
+  if (!IDDatPhong || !IDKH) throw new Error("Thiếu trường dữ liệu");
 
-  const item = await Loaiphong.findOne({ TenLoaiPhong });
+  const item = await HoaDon.findOne({ DatPhong: IDDatPhong, ThongTinKH: IDKH });
 
-  if (item) throw new Error("Loại phòng đã tồn tại");
+  if (item) throw new Error("Hoá đơn đã tồn tại");
   else {
-    const data = req.body;
-
-    data.TienNghi = req.body.TienNghi.split(",");
-
-    const newLoai = await Loaiphong.create(data);
+    const newLoai = await HoaDon.create(req.body);
     return res.status(200).json({
       success: newLoai ? true : false,
       mes: newLoai ? newLoai : "Đã xảy ra lỗi",
@@ -27,24 +23,35 @@ const create = asyncHandler(async (req, res) => {
 const getAll = async (req, res) => {
   try {
     let query = req.query || {};
-    const result = await Loaiphong.find(query);
+    const result = await HoaDon.find(query);
 
     return res.status(200).json({
       success: result ? true : false,
       data: result,
     });
   } catch (err) {
-    console.error("Loaiphong getAll failed: " + err);
+    console.error("HoaDon getAll failed: " + err);
     errorHandler(err, res, req);
   }
 };
 
-const getLP = asyncHandler(async (req, res) => {
+const getHD_DP_KH = asyncHandler(async (req, res) => {
+  let query = req.query || {};
+  const multiData = await HoaDon.find(query)
+    .populate("DatPhong", "NgayBatDau NgayKetThuc")
+    .populate("ThongTinKH", "TenKH SDT Email");
+  return res.status(200).json({
+    success: multiData ? true : false,
+    data: multiData ? multiData : "Đã xảy ra lỗi",
+  });
+});
+
+const getHD = asyncHandler(async (req, res) => {
   const { TenLoaiPhong } = req.params;
 
   if (!TenLoaiPhong) throw new Error("Thiếu trường dữ liệu");
 
-  const result = await Loaiphong.findOne({ TenLoaiPhong });
+  const result = await HoaDon.findOne({ TenLoaiPhong });
   return res.status(200).json({
     success: result ? true : false,
     mes: result ? result : "Đã xảy ra lỗi",
@@ -66,10 +73,10 @@ const getList = async (req, res) => {
       };
     }
 
-    const result = await Loaiphong.paginate({}, options);
+    const result = await HoaDon.paginate({}, options);
     return res.status(200).json(result);
   } catch (err) {
-    console.error("Loaiphong list failed: " + err);
+    console.error("HoaDon list failed: " + err);
     errorHandler(err, res, req);
   }
 };
@@ -83,7 +90,7 @@ const update = asyncHandler(async (req, res) => {
 
   data.TienNghi = req.body.TienNghi.split(",");
 
-  const response = await Loaiphong.findOneAndUpdate(
+  const response = await HoaDon.findOneAndUpdate(
     { TenLoaiPhong: TenLoaiPhong },
     {
       MoTa: data.MoTa,
@@ -104,21 +111,21 @@ const remove = async (req, res) => {
   try {
     const { TenLoaiPhong } = req.params;
 
-    const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
+    const findLP = await HoaDon.findOne({ TenLoaiPhong: TenLoaiPhong });
     //retrieve current image ID
     let imgId = findLP.images[0].split("AnhOctHotel/")[1];
     imgId = "AnhOctHotel/" + imgId.split(".")[0];
     if (imgId) {
       await cloudinary.uploader.destroy(imgId);
     }
-    await Loaiphong.findOneAndUpdate(
+    await HoaDon.findOneAndUpdate(
       {
         TenLoaiPhong: TenLoaiPhong,
       },
       { $pop: { images: -1 } }
     );
 
-    const result = await Loaiphong.findOneAndDelete({
+    const result = await HoaDon.findOneAndDelete({
       TenLoaiPhong: TenLoaiPhong,
     });
     return res.status(200).json({
@@ -126,7 +133,7 @@ const remove = async (req, res) => {
       mes: result ? "Xoá loại phòng thành công" : "Đã có lỗi xảy ra",
     });
   } catch (err) {
-    console.error("Loaiphong delete failed: " + err);
+    console.error("HoaDon delete failed: " + err);
     errorHandler(err, res, req);
   }
 };
@@ -136,14 +143,14 @@ const uploadSingleImage = asyncHandler(async (req, res) => {
   const { TenLoaiPhong, image, isCre } = req.body;
 
   if (!isCre) {
-    const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
+    const findLP = await HoaDon.findOne({ TenLoaiPhong: TenLoaiPhong });
     //retrieve current image ID
     let imgId = findLP.images[0].split("AnhOctHotel/")[1];
     imgId = "AnhOctHotel/" + imgId.split(".")[0];
     if (imgId) {
       await cloudinary.uploader.destroy(imgId);
     }
-    await Loaiphong.findOneAndUpdate(
+    await HoaDon.findOneAndUpdate(
       {
         TenLoaiPhong: TenLoaiPhong,
       },
@@ -154,7 +161,7 @@ const uploadSingleImage = asyncHandler(async (req, res) => {
   const result = await cloudinary.uploader.upload(image, {
     folder: "AnhOctHotel",
   });
-  const phongUpdate = await Loaiphong.findOneAndUpdate(
+  const phongUpdate = await HoaDon.findOneAndUpdate(
     { TenLoaiPhong: TenLoaiPhong },
     { $push: { images: result.secure_url } },
     { new: true }
@@ -180,7 +187,8 @@ const uploadSingleImage = asyncHandler(async (req, res) => {
 module.exports = {
   create,
   getAll,
-  getLP,
+  getHD_DP_KH,
+  getHD,
   getList,
   update,
   remove,

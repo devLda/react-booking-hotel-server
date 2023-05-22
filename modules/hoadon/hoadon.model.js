@@ -1,30 +1,28 @@
 const mongoose = require("mongoose");
 const mongoosePaginate = require("mongoose-paginate");
 
-const DatPhongSchema = new mongoose.Schema(
+const HoaDonSchema = new mongoose.Schema(
   {
-    Phong: {
+    DatPhong: {
       type: mongoose.Types.ObjectId,
-      ref: "Phong",
+      ref: "DatPhong",
     },
     ThongTinKH: {
       type: mongoose.Types.ObjectId,
       ref: "ThongTinKH",
     },
-    NgayBatDau: {
-      type: String,
-      required: true,
+    DichVu: {
+      type: Array,
     },
-    NgayKetThuc: {
-      type: String,
-      required: true,
+    GiaoDich: {
+      type: Array,
     },
-    TongNgay: {
+    TongTien: {
       type: Number,
     },
     TrangThai: {
       type: String,
-      default: "Chờ xử lý",
+      default: "Chưa thanh toán",
     },
   },
   {
@@ -32,5 +30,5 @@ const DatPhongSchema = new mongoose.Schema(
   }
 );
 
-DatPhongSchema.plugin(mongoosePaginate);
-module.exports = mongoose.model("DatPhong", DatPhongSchema);
+HoaDonSchema.plugin(mongoosePaginate);
+module.exports = mongoose.model("HoaDon", HoaDonSchema);

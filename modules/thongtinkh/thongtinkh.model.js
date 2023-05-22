@@ -3,9 +3,6 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const ThongTinKHSchema = new mongoose.Schema(
   {
-    GiaoDich: {
-      type: Array,
-    },
     Email: {
       type: String,
       required: true,

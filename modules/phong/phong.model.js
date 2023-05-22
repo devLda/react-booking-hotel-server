@@ -3,9 +3,9 @@ const mongoosePaginate = require("mongoose-paginate");
 
 const PhongSchema = new mongoose.Schema(
   {
-    SoPhong: {
+    MaPhong: {
       type: Number,
-      // required: true
+      required: true,
     },
     LoaiPhong: {
       type: mongoose.Types.ObjectId,
@@ -21,7 +21,7 @@ const PhongSchema = new mongoose.Schema(
     SoNguoi: {
       type: Number,
       required: true,
-    }, 
+    },
     DienTich: {
       type: Number,
       required: true,

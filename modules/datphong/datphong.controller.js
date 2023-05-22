@@ -1,5 +1,6 @@
 const Datphong = require("./datphong.model");
 const PhongMD = require("../phong/phong.model");
+const HoaDon = require("../hoadon/hoadon.model");
 const ThongTinKH = require("../thongtinkh/thongtinkh.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
@@ -10,7 +11,7 @@ const stripe = require("stripe")(
 const { v4: uuidv4 } = require("uuid");
 const sendMail = require("../../utils/sendMail");
 
-module.exports.create = asyncHandler(async (req, res) => {
+const create = asyncHandler(async (req, res) => {
   const {
     Phong,
     NgayBatDau,
@@ -55,30 +56,15 @@ module.exports.create = asyncHandler(async (req, res) => {
     if (!findPhong) throw new Error("Không tìm thấy phòng đã chọn");
     else {
       let KH;
-      if (findKH) {
-        const updateKH = await ThongTinKH.findOne({
-          Email: Email,
-          TenKH: TenKH,
-          SDT: SDT,
-        });
-        updateKH.GiaoDich.push({
-          MaGD: payment.id,
-          NgayGD: moment().format("hh:mm:ss DD-MM-YYYY"),
-          SoTien: DaThanhToan,
-        });
-        KH = await updateKH.save();
-      } else {
+      if (!findKH) {
         const newKH = new ThongTinKH({
-          GiaoDich: {
-            MaGD: payment.id,
-            NgayGD: moment().format("hh:mm:ss DD-MM-YYYY"),
-            SoTien: DaThanhToan,
-          },
           Email: Email,
           TenKH: TenKH,
           SDT: SDT,
         });
         KH = await newKH.save();
+      } else {
+        KH = findKH;
       }
 
       const newBook = new Datphong({
@@ -87,10 +73,21 @@ module.exports.create = asyncHandler(async (req, res) => {
         NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
         NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
         TongNgay: TongNgay,
-        TrangThai: "Booked",
+        TrangThai: "Đã đặt",
       });
 
       const booking = await newBook.save();
+
+      await HoaDon.create({
+        DatPhong: booking._id,
+        GiaoDich: {
+          MaGD: payment.id,
+          DaThanhToan: DaThanhToan,
+          NgayThanhToan: moment().format("hh:mm:ss A DD-MM-YYYY"),
+        },
+        TongTien: (DaThanhToan * 10) / 3,
+        TrangThai: "Đã đặt cọc",
+      });
 
       const roomtemp = await PhongMD.findOne({ _id: Phong });
 
@@ -129,50 +126,28 @@ module.exports.create = asyncHandler(async (req, res) => {
   }
 });
 
-// const newKH = new ThongTinKH({
-//   Email: Email,
-//   TenKH: TenKH,
-//   SDT: SDT,
-// });
-// const KH = await newKH.save()
+const getAll = asyncHandler(async (req, res) => {
+  let query = req.query || {};
+  const result = await Datphong.find(query);
 
-// const newBook = new Datphong({
-//   Phong: Phong,
-//   ThongTinKH: KH._id,
-//   GiaoDich: "6465d1b10c8890a2a5b19050",
-//   NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
-//   NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
-//   TongNgay: TongNgay,
-// });
+  return res.status(200).json({
+    success: result ? true : false,
+    data: result ? result : "Đã xảy ra lỗi",
+  });
+});
 
-// const booking = await newBook.save()
+const getMultiAllData = asyncHandler(async (req, res) => {
+  let query = req.query || {};
+  const multiData = await Datphong.find(query)
+    .populate("Phong", "MaPhong _id")
+    .populate("ThongTinKH", "TenKH SDT Email");
+  return res.status(200).json({
+    success: multiData ? true : false,
+    data: multiData,
+  });
+});
 
-// findPhong.LichDat.push({
-//   DatPhong: booking._id,
-//   NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
-//   NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
-//   KhachHang: KH._id,
-//   TrangThai: booking.TrangThai
-// });
-// return res.status(200).json({
-//   success: booking ? true : false,
-//   mes: booking ? booking : "Đã xảy ra lỗi!!!"
-// });
-
-module.exports.getAll = async (req, res) => {
-  try {
-    let query = req.query || {};
-    const result = await Datphong.find(query);
-
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Datphong getAll failed: " + err);
-    const { status, message } = errorHandler(err);
-    res.status(status).json({ message, entity: "Datphong" });
-  }
-};
-
-module.exports.getById = async (req, res) => {
+const getById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Datphong.findById(id);
@@ -185,7 +160,7 @@ module.exports.getById = async (req, res) => {
   }
 };
 
-module.exports.getList = async (req, res) => {
+const getList = async (req, res) => {
   try {
     const { page = 1, limit = 20, sortField, sortOrder } = req.query;
     const options = {
@@ -209,7 +184,81 @@ module.exports.getList = async (req, res) => {
   }
 };
 
-module.exports.update = async (req, res) => {
+const getStatic = asyncHandler(async (req, res) => {
+  const DonDatThang = await Datphong.count({
+    NgayBatDau: {
+      $regex: /-05-/,
+    },
+    NgayKetThuc: {
+      $regex: /-05-/,
+    },
+  });
+
+  const KHThang = await ThongTinKH.count({
+    createdAt: {
+      $gte: new Date("2023-05-01T14:55:32.983+00:00"),
+      $lt: new Date("2023-05-31T14:55:32.983+00:00"),
+    },
+  });
+  // const findDP = await Datphong.find({
+  //   NgayBatDau: {
+  //     $regex: /-05-/,
+  //   },
+  //   NgayKetThuc: {
+  //     $regex: /-05-/,
+  //   },
+  // })
+
+  const ToTal = await HoaDon.aggregate([
+    {
+      $match: {
+        TrangThai: {
+          $eq: "Đã đặt cọc",
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total_tongtien: { $sum: "$TongTien" },
+      },
+    },
+  ]);
+
+  const orderline = await Datphong.find({})
+    .populate("Phong", "MaPhong")
+    .populate("ThongTinKH", "TenKH");
+
+  const TotalThang = await HoaDon.aggregate([
+    {
+      $match: {
+        TrangThai: {
+          $eq: "Đã đặt cọc",
+        },
+        createdAt: {
+          $gte: new Date("2023-05-01T14:55:32.983+00:00"),
+          $lt: new Date("2023-05-31T14:55:32.983+00:00"),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total_tongtien: { $sum: "$TongTien" },
+      },
+    },
+  ]);
+
+  return res.status(200).json({
+    donthang: DonDatThang,
+    khthang: KHThang,
+    total: ToTal,
+    totalthang: TotalThang,
+    orderline: orderline,
+  });
+});
+
+const update = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await Datphong.findOneAndUpdate({ _id: id }, req.body, {
@@ -224,7 +273,7 @@ module.exports.update = async (req, res) => {
   }
 };
 
-module.exports.remove = async (req, res) => {
+const remove = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -235,4 +284,15 @@ module.exports.remove = async (req, res) => {
     const { status, message } = errorHandler(err);
     res.status(status).json({ message, entity: "Datphong" });
   }
+};
+
+module.exports = {
+  create,
+  getAll,
+  getMultiAllData,
+  getById,
+  getList,
+  getStatic,
+  update,
+  remove,
 };

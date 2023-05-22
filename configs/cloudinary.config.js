@@ -20,21 +20,62 @@ const storage = new CloudinaryStorage({
 
 const uploadCloud = multer({
   storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      return cb(new Error("Chỉ cho phép định dạng .png .jpg .jpeg"));
-    }
-  },
+  // fileFilter: (req, file, cb) => {
+  //   if (
+  //     file.mimetype == "image/png" ||
+  //     file.mimetype == "image/jpg" ||
+  //     file.mimetype == "image/jpeg"
+  //   ) {
+  //     cb(null, true);
+  //   } else {
+  //     cb(null, false);
+  //     return cb(new Error("Chỉ cho phép định dạng .png .jpg .jpeg"));
+  //   }
+  // },
   // limits: {
   //   fileSize: maxSize,
   // },
 });
 
-module.exports = uploadCloud;
+// const opts = {
+//   folder: "AnhOctHotel",
+//   resource_type: "image",
+// };
+
+// module.exports = uploadCloud;
+// const uploadImage = (image) => {
+//   return new Promise((resolve, reject) => {
+//     cloudinary.uploader.upload(image, opts, (error, result) => {
+//       if (result && result.secure_url) {
+//         console.log(result.secure_url);
+//         return resolve(result.secure_url);
+//       }
+//       console.log(error.message);
+//       return reject({ mes: error.message });
+//     });
+//   });
+// };
+
+// module.exports = (image) => {
+//   return new Promise((resolve, reject) => {
+//     cloudinary.uploader.upload(image, opts, (error, result) => {
+//       if (result && result.secure_url) {
+//         console.log(result.secure_url);
+//         return resolve(result.secure_url);
+//       }
+//       console.log(error.message);
+//       return reject({ mes: error.message });
+//     });
+//   });
+// };
+
+// module.exports.uploadMultipleImages = (images) => {
+//   return new Promise((resolve, reject) => {
+//     const uploads = images.map((base) => uploadImage(base));
+//     Promise.all(uploads)
+//       .then((values) => resolve(values))
+//       .catch((err) => reject(err));
+//   });
+// };
+
+module.exports = cloudinary;

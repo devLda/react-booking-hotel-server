@@ -3,7 +3,7 @@ const {
   create,
   getAll,
   getById,
-  getList,
+  getBooking,
   update,
   remove,
 } = require("./thongtinkh.controller");
@@ -13,7 +13,7 @@ router.post("/add", create);
 
 router.get("/", getAll);
 
-router.get("/list", getList);
+router.get("/getbooking/:Email", getBooking);
 
 router.get("/:id", getById);
 

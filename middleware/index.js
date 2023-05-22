@@ -24,6 +24,7 @@ const globalMiddelwares = (app, dir) => {
   app.use("/api/phong", require("../modules/phong"));
   app.use("/api/datphong", require("../modules/datphong"));
   app.use("/api/thongtinkh", require("../modules/thongtinkh"));
+  app.use("/api/hoadon", require("../modules/hoadon"));
 };
 
 module.exports = globalMiddelwares;

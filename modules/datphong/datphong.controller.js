@@ -80,6 +80,7 @@ const create = asyncHandler(async (req, res) => {
 
       await HoaDon.create({
         DatPhong: booking._id,
+        ThongTinKH: KH._id,
         GiaoDich: {
           MaGD: payment.id,
           DaThanhToan: DaThanhToan,
@@ -258,6 +259,41 @@ const getStatic = asyncHandler(async (req, res) => {
   });
 });
 
+const cancelBooking = asyncHandler(async(req, res) => {
+  const {IdHoaDon, IdDatPhong} = req.body
+  if(!IdHoaDon || !IdDatPhong) throw new Error("Đơn đặt đã không còn tồn tại")
+
+  // const datphong = await DatPhong.findByIdAndUpdate(IdDatPhong, {
+  //   TrangThai: "Đã hủy"
+  // }, {
+  //   new: true
+  // })
+  const datphong = await Datphong.findByIdAndUpdate(IdDatPhong, {
+    TrangThai: "Đã hủy"
+  }, {
+    new: true
+  })
+  const hoadon = await HoaDon.findByIdAndUpdate(IdHoaDon, {
+    TrangThai: "Đã hủy"
+  }, {
+    new: true
+  })
+  const phong = await PhongMD.findById(datphong.Phong)
+
+  const temp = phong?.LichDat.filter(item => {
+    if(item.DatPhong.toString() !== datphong._id.toString())
+      return item
+  })
+
+  phong.LichDat = temp
+  phong.save()
+
+  return res.status(200).json({
+    success: phong ? true : false,
+    data: phong
+  })
+})
+
 const update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -293,6 +329,7 @@ module.exports = {
   getById,
   getList,
   getStatic,
+  cancelBooking,
   update,
   remove,
 };

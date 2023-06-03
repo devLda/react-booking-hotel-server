@@ -1,31 +1,24 @@
 const express = require("express");
-const {
-  create,
-  getAll,
-  getMultiAllData,
-  getById,
-  getList,
-  update,
-  remove,
-  getStatic,
-} = require("./datphong.controller");
+const control = require("./datphong.controller");
 const router = express.Router();
 const { isAdmin, verifyAccessToken } = require("../../middleware/verifyToken");
 
-router.post("/add", create);
+router.post("/add", control.create);
 
-router.get("/", [verifyAccessToken, isAdmin], getAll);
+router.get("/", [verifyAccessToken, isAdmin], control.getAll);
 
-router.get("/multidata", getMultiAllData);
+router.get("/multidata", control.getMultiAllData);
 
-router.get("/list", getList);
+router.get("/list", control.getList);
 
-router.get("/static", getStatic);
+router.get("/static", control.getStatic);
 
-router.get("/:id", getById);
+router.get("/:id", control.getById);
 
-router.put("/:id", update);
+router.put("/cancel", control.cancelBooking)
 
-router.delete("/:id", [verifyAccessToken, isAdmin], remove);
+router.put("/:id", control.update);
+
+router.delete("/:id", [verifyAccessToken, isAdmin], control.remove);
 
 module.exports = router;

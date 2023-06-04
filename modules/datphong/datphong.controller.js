@@ -185,29 +185,41 @@ const getList = async (req, res) => {
 };
 
 const getStatic = asyncHandler(async (req, res) => {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const year = today.getFullYear() + "";
+  const month =
+    today.getMonth() < 10
+      ? "0" + (today.getMonth() + 1)
+      : "" + (today.getMonth() + 1);
+  const fday =
+    firstDay.getDate() < 10
+      ? "0" + firstDay.getDate()
+      : "" + firstDay.getDate();
+  const lday =
+    lastDay.getDate() < 10 ? "0" + lastDay.getDate() : "" + lastDay.getDate();
+
+  const regexMonth = new RegExp(`-${month}-`);
+  // console.log(month);
   const DonDatThang = await Datphong.count({
     NgayBatDau: {
-      $regex: /-05-/,
+      $regex: regexMonth,
     },
     NgayKetThuc: {
-      $regex: /-05-/,
+      $regex: regexMonth,
     },
   });
 
+  const gteThang = `${year}-${month}-${fday}`;
+  const ltThang = `${year}-${month}-${lday}`;
   const KHThang = await ThongTinKH.count({
     createdAt: {
-      $gte: new Date("2023-05-01T14:55:32.983+00:00"),
-      $lt: new Date("2023-05-31T14:55:32.983+00:00"),
+      $gte: new moment(gteThang),
+      $lt: new moment(ltThang),
     },
   });
-  // const findDP = await Datphong.find({
-  //   NgayBatDau: {
-  //     $regex: /-05-/,
-  //   },
-  //   NgayKetThuc: {
-  //     $regex: /-05-/,
-  //   },
-  // })
 
   const ToTal = await HoaDon.aggregate([
     {
@@ -236,8 +248,8 @@ const getStatic = asyncHandler(async (req, res) => {
           $eq: "Đã đặt cọc",
         },
         createdAt: {
-          $gte: new Date("2023-05-01T14:55:32.983+00:00"),
-          $lt: new Date("2023-05-31T14:55:32.983+00:00"),
+          $gte: new Date(`${year}-${month}-${fday}T00:00:01.983+00:00`),
+          $lt: new Date(`${year}-${month}-${lday}T23:59:59.983+00:00`),
         },
       },
     },

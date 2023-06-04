@@ -1,5 +1,6 @@
 const Thongtinkh = require("./thongtinkh.model");
-const HoaDon = require("../hoadon/hoadon.model");
+const DatPhong = require("../datphong/datphong.model")
+const HoaDon = require("../hoadon/hoadon.model")
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
@@ -54,13 +55,25 @@ const getBooking = async (req, res) => {
       mes: "Bạn không có đơn đặt phòng nào",
     });
   } else {
-    const findHD = await HoaDon.find({ ThongTinKH: findKH._id }).populate(
-      "DatPhong",
-      "NgayBatDau NgayKetThuc"
-    );
+    const findDP = await DatPhong.find({ ThongTinKH: findKH._id }).populate(
+      "Phong",
+      "MaPhong"
+    )
+    const result = []
+
+    for(let i in findDP) {
+      const findHD = await HoaDon.findOne({DatPhong: findDP[i]._id}).populate(
+        "DatPhong",
+        "NgayBatDau NgayKetThuc TrangThai TongNgay"
+        )
+      const temp = JSON.parse(JSON.stringify(findHD))
+      temp.MaPhong = findDP[i].Phong.MaPhong
+      result.push(temp)
+    }
+    
     return res.status(200).json({
-      success: findHD ? true : false,
-      data: findHD ? findHD : "Đã xảy ra lỗi",
+      success: result ? true : false,
+      data: result ? result : "Đã xảy ra lỗi",
     });
   }
 };

@@ -45,7 +45,7 @@ const getPhong = asyncHandler(async (req, res) => {
 });
 
 // const excludedFields = "-refreshToken -password -role -createdAt -updatedAt";
-const fieldsLoaiPhong = "_id TenLoaiPhong";
+const fieldsLoaiPhong = "_id TenLoaiPhong TienNghi";
 const getMultiDataPhong = asyncHandler(async (req, res) => {
   const { pid } = req.params;
   console.log(pid);

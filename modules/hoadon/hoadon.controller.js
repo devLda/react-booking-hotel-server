@@ -85,24 +85,44 @@ const update = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const request = req.body;
-  
-  if (!id ) throw new Error("Không tìm thấy hóa đơn!");
 
-  if( request.length === 0 ) throw new Error("Chưa có dịch vụ nào được thêm!!!")
-  
-  const response = await HoaDon.findById(id)
+  if (!id) throw new Error("Không tìm thấy hóa đơn!");
 
-  const dvHoaDon = response.DichVu
+  if (request.length === 0) throw new Error("Chưa có dịch vụ nào được thêm!!!");
+
+  const response = await HoaDon.findById(id);
+
+  const dvHoaDon = response.DichVu;
+
+  request.forEach((element) => {
+    let count = 0;
+    if (dvHoaDon.length > 0)
+      for (let i in dvHoaDon) {
+        if (dvHoaDon[i].MaDichVu === element.MaDichVu) {
+          count++;
+          dvHoaDon[i].SoLuong += element.SoLuong;
+        }
+
+        if (count === 0 && parseFloat(i) === dvHoaDon.length - 1) {
+          dvHoaDon.push(element);
+        }
+      }
+    else {
+      dvHoaDon.push(element);
+    }
+  });
 
   // request.forEach(element => {
   //   if(dvHoaDon.some( item => item.MaDichVu === element.MaDichVu))
   // });
- 
-  await response.save()
-  
+
+  // await response.save()
+
   return res.status(200).json({
-    success: response ? true : false,
-    mes: response ? response : "Đã xảy ra lỗi",
+    // success: response ? true : false,
+    success: request,
+    // mes: response ? response : "Đã xảy ra lỗi",
+    mes: dvHoaDon,
   });
 });
 

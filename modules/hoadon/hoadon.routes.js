@@ -23,7 +23,7 @@ router.get("/list", getList);
 
 router.get("/get/:id", getHD);
 
-router.put("/update/:id", [verifyAccessToken, isAdmin], update);
+router.put("/update/:id", update);
 
 router.post("/uploadimage", uploadSingleImage);
 

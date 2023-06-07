@@ -1,5 +1,5 @@
 const HoaDon = require("./hoadon.model");
-const DatPhong = require("../datphong/datphong.model");
+const DichVu = require("../dichvu/dichvu.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
@@ -82,25 +82,24 @@ const getList = async (req, res) => {
 };
 
 const update = asyncHandler(async (req, res) => {
-  const { TenLoaiPhong } = req.body;
+  const { id } = req.params;
 
-  if (!TenLoaiPhong) throw new Error("Không tìm thấy loại phòng!");
+  const request = req.body;
+  
+  if (!id ) throw new Error("Không tìm thấy hóa đơn!");
 
-  const data = req.body;
+  if( request.length === 0 ) throw new Error("Chưa có dịch vụ nào được thêm!!!")
+  
+  const response = await HoaDon.findById(id)
 
-  data.TienNghi = req.body.TienNghi.split(",");
+  const dvHoaDon = response.DichVu
 
-  const response = await HoaDon.findOneAndUpdate(
-    { TenLoaiPhong: TenLoaiPhong },
-    {
-      MoTa: data.MoTa,
-      TienNghi: data.TienNghi,
-    },
-    {
-      new: true,
-    }
-  );
-
+  // request.forEach(element => {
+  //   if(dvHoaDon.some( item => item.MaDichVu === element.MaDichVu))
+  // });
+ 
+  await response.save()
+  
   return res.status(200).json({
     success: response ? true : false,
     mes: response ? response : "Đã xảy ra lỗi",

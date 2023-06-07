@@ -7,10 +7,10 @@ router.post("/add", control.create);
 
 router.get("/", control.getAll);
 
-router.get("/:id", control.getById);
+router.get("/get/:MaDichVu", control.getOne);
 
-router.put("/:id", control.update);
+router.put("/update/:MaDichVu", control.update);
 
-router.delete("/:id", [verifyAccessToken, isAdmin], control.remove);
+router.delete("/delete/:MaDichVu", [verifyAccessToken, isAdmin], control.remove);
 
 module.exports = router;

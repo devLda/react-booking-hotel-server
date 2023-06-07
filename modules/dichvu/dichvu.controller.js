@@ -3,15 +3,18 @@ const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
 const create = asyncHandler(async (req, res) => {
-  const { MaDichvu, TenDichVu, GiaDichVu } = req.body;
+  const { MaDichVu, TenDichVu, GiaDichVu } = req.body;
 
-  if (!MaDichvu || !TenDichVu || !GiaDichVu)
+  if (!MaDichVu || !TenDichVu || !GiaDichVu)
     throw new Error("Thiếu trường dữ liệu!");
 
+  if(parseFloat(GiaDichVu) != GiaDichVu)
+  throw new Error("Giá dịch vụ phải là số nguyên")
+
   const newDichVu = await DichVu.create({
-    MaDichVu: MaDichvu,
+    MaDichVu: MaDichVu,
     TenDichVu: TenDichVu,
-    GiaDichVu: GiaDichVu,
+    GiaDichVu: parseFloat(GiaDichVu),
   });
 
   return res.status(200).json({
@@ -30,45 +33,48 @@ const getAll = asyncHandler(async (req, res) => {
   });
 });
 
-const getById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-    const result = await DichVu.findById(id);
+const getOne = asyncHandler(async (req, res) => {
+  const { MaDichVu } = req.params;
+  if(!MaDichVu) throw new Error("Mã dịch vụ bị thiếu!!!!")
+    const result = await DichVu.findOne({MaDichVu: MaDichVu});
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: result ? true : false,
+      data: result ? result : "Đã xảy ra lỗi!!!"
+    });
 });
 
-const update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Datphong.findOneAndUpdate({ _id: id }, req.body, {
-      new: true,
-    });
+const update = asyncHandler(async (req, res) => {
+  const { MaDichVu } = req.params;
+  if(!MaDichVu) throw new Error("Mã dịch vụ bị thiếu!!!!")
+  const data = req.body;
+  data.GiaDichVu = parseFloat(req.body.GiaDichVu)
+  const result = await DichVu.findOneAndUpdate({MaDichVu: MaDichVu}, data, {
+    new: true,
+  });
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Datphong update failed: " + err);
-    const { status, message } = errorHandler(err);
-    res.status(status).json({ message, entity: "Datphong" });
-  }
-};
+  return res.status(200).json({
+    success: result ? true : false,
+    data: result ? result : "Đã xảy ra lỗi"
+  });
+});
 
-const remove = async (req, res) => {
-  try {
-    const { id } = req.params;
+const remove = asyncHandler (async (req, res) => {
+  const { MaDichVu } = req.params;
+  if(!MaDichVu) throw new Error("Mã dịch vụ bị thiếu!!!!")
 
-    const result = await Datphong.deleteOne({ _id: id });
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Datphong delete failed: " + err);
-    const { status, message } = errorHandler(err);
-    res.status(status).json({ message, entity: "Datphong" });
-  }
-};
+  const delDV = await DichVu.findOneAndDelete({MaDichVu: MaDichVu})
+
+  return res.status(200).json({
+    success: delDV ? true : false,
+    mes: delDV ? "Xóa dịch vụ thành công" : "Đã xảy ra lỗi"
+  })
+});
 
 module.exports = {
   create,
   getAll,
-  getById,
+  getOne,
   update,
   remove,
 };

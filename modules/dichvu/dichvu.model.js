@@ -4,7 +4,7 @@ const mongoosePaginate = require("mongoose-paginate");
 const DichVuSchema = new mongoose.Schema(
   {
     MaDichVu: {
-      type: mongoose.Types.ObjectId,
+      type: String,
       required: true,
     },
     TenDichVu: {

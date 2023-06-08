@@ -58,28 +58,59 @@ const getHD = asyncHandler(async (req, res) => {
   });
 });
 
-const getList = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, sortField, sortOrder } = req.query;
-    const options = {
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
-      sort: {},
-    };
+const filterDV = (hoadons) => {
+  const tempHD = [];
 
-    if (sortField && sortOrder) {
-      options.sort = {
-        [sortField]: sortOrder,
-      };
+  for (const element of hoadons) {
+    let count = 0;
+    if (element.DichVu.length > 0) {
+      for (const item of element.DichVu) {
+        if (tempHD.length > 0) {
+          if (tempHD.some((ele) => ele.MaDichVu === item.MaDichVu)) {
+          }
+        } else {
+          count++;
+          tempHD.push({
+            label: item.TenDichVu,
+            count: count,
+          });
+        }
+      }
     }
 
-    const result = await HoaDon.paginate({}, options);
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("HoaDon list failed: " + err);
-    errorHandler(err, res, req);
+    if (count > 0) {
+      tempRoom.push({
+        label: item.MaPhong,
+        value: count,
+      });
+    }
   }
+  return tempRoom;
 };
+
+const staticDV = asyncHandler(async (req, res) => {
+  const response = await HoaDon.find({}).populate(
+    "DatPhong",
+    "NgayBatDau NgayKetThuc",
+    {
+      NgayBatDau: {
+        $regex: /-06-/,
+      },
+      NgayKetThuc: {
+        $regex: /-06-/,
+      },
+    }
+  );
+
+  const filterHD = [];
+  for (let i in response) {
+    if (response[i].DatPhong === null) continue;
+    filterHD.push(response[i]);
+  }
+  // const result = filterDV(filterHD);
+
+  return res.status(200).json(filterHD);
+});
 
 const update = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -94,36 +125,37 @@ const update = asyncHandler(async (req, res) => {
 
   const dvHoaDon = response.DichVu;
 
-  const dpHoaDon = await DatPhong.findById(response.DatPhong)
-                        .populate("Phong", "GiaPhong")
+  const dpHoaDon = await DatPhong.findById(response.DatPhong).populate(
+    "Phong",
+    "GiaPhong"
+  );
 
-  let tongTien = dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong
+  let tongTien = dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong;
 
   request.forEach((element) => {
-
     let count = 0;
     if (dvHoaDon.length > 0)
       for (let i in dvHoaDon) {
         if (dvHoaDon[i].MaDichVu === element.MaDichVu) {
           count++;
           dvHoaDon[i].SoLuong += element.SoLuong;
-          tongTien += dvHoaDon[i].SoLuong * dvHoaDon[i].GiaDichVu 
+          tongTien += dvHoaDon[i].SoLuong * dvHoaDon[i].GiaDichVu;
         }
 
         if (count === 0 && parseFloat(i) === dvHoaDon.length - 1) {
-          tongTien += element.SoLuong * element.GiaDichVu 
+          tongTien += element.SoLuong * element.GiaDichVu;
           dvHoaDon.push(element);
         }
       }
     else {
-      tongTien += element.SoLuong * element.GiaDichVu 
+      tongTien += element.SoLuong * element.GiaDichVu;
       dvHoaDon.push(element);
     }
   });
 
-  response.DichVu = dvHoaDon
-  response.TongTien = tongTien
-  await response.save()
+  response.DichVu = dvHoaDon;
+  response.TongTien = tongTien;
+  await response.save();
 
   return res.status(200).json({
     success: response ? true : false,
@@ -164,60 +196,12 @@ const remove = async (req, res) => {
   }
 };
 
-const uploadSingleImage = asyncHandler(async (req, res) => {
-  // const { TenLoaiPhong } = req.params;
-  const { TenLoaiPhong, image, isCre } = req.body;
-
-  if (!isCre) {
-    const findLP = await HoaDon.findOne({ TenLoaiPhong: TenLoaiPhong });
-    //retrieve current image ID
-    let imgId = findLP.images[0].split("AnhOctHotel/")[1];
-    imgId = "AnhOctHotel/" + imgId.split(".")[0];
-    if (imgId) {
-      await cloudinary.uploader.destroy(imgId);
-    }
-    await HoaDon.findOneAndUpdate(
-      {
-        TenLoaiPhong: TenLoaiPhong,
-      },
-      { $pop: { images: -1 } }
-    );
-  }
-
-  const result = await cloudinary.uploader.upload(image, {
-    folder: "AnhOctHotel",
-  });
-  const phongUpdate = await HoaDon.findOneAndUpdate(
-    { TenLoaiPhong: TenLoaiPhong },
-    { $push: { images: result.secure_url } },
-    { new: true }
-  );
-
-  return res.status(200).json({
-    success: phongUpdate ? true : false,
-    mes: phongUpdate ? phongUpdate : "Đã xảy ra lỗi",
-  });
-});
-
-// const uploadMultiImage = asyncHandler(async (req, res) => {
-//   const { image } = req.body;
-//   const result = await cloudinary.uploader.upload(image, {
-//     folder: "AnhOctHotel",
-//   });
-//   return res.status(200).json({
-//     success: result ? true : false,
-//     mes: result ? result : "Đã xảy ra lỗi",
-//   });
-// });
-
 module.exports = {
   create,
   getAll,
   getHD_DP_KH,
   getHD,
-  getList,
+  staticDV,
   update,
   remove,
-  uploadSingleImage,
-  // uploadMultiImage,
 };

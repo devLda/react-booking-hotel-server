@@ -185,7 +185,7 @@ const getList = async (req, res) => {
   }
 };
 
-const getStatic = asyncHandler(async (req, res) => {
+const getStaticDashboard = asyncHandler(async (req, res) => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -271,40 +271,47 @@ const getStatic = asyncHandler(async (req, res) => {
   });
 });
 
-const cancelBooking = asyncHandler(async(req, res) => {
-  const {IdHoaDon, IdDatPhong} = req.body
-  if(!IdHoaDon || !IdDatPhong) throw new Error("Đơn đặt đã không còn tồn tại")
+const cancelBooking = asyncHandler(async (req, res) => {
+  const { IdHoaDon, IdDatPhong } = req.body;
+  if (!IdHoaDon || !IdDatPhong) throw new Error("Đơn đặt đã không còn tồn tại");
 
   // const datphong = await DatPhong.findByIdAndUpdate(IdDatPhong, {
   //   TrangThai: "Đã hủy"
   // }, {
   //   new: true
   // })
-  const datphong = await Datphong.findByIdAndUpdate(IdDatPhong, {
-    TrangThai: "Đã hủy"
-  }, {
-    new: true
-  })
-  const hoadon = await HoaDon.findByIdAndUpdate(IdHoaDon, {
-    TrangThai: "Đã hủy"
-  }, {
-    new: true
-  })
-  const phong = await PhongMD.findById(datphong.Phong)
+  const datphong = await Datphong.findByIdAndUpdate(
+    IdDatPhong,
+    {
+      TrangThai: "Đã hủy",
+    },
+    {
+      new: true,
+    }
+  );
+  const hoadon = await HoaDon.findByIdAndUpdate(
+    IdHoaDon,
+    {
+      TrangThai: "Đã hủy",
+    },
+    {
+      new: true,
+    }
+  );
+  const phong = await PhongMD.findById(datphong.Phong);
 
-  const temp = phong?.LichDat.filter(item => {
-    if(item.DatPhong.toString() !== datphong._id.toString())
-      return item
-  })
+  const temp = phong?.LichDat.filter((item) => {
+    if (item.DatPhong.toString() !== datphong._id.toString()) return item;
+  });
 
-  phong.LichDat = temp
-  phong.save()
+  phong.LichDat = temp;
+  phong.save();
 
   return res.status(200).json({
     success: phong ? true : false,
-    data: phong
-  })
-})
+    data: phong,
+  });
+});
 
 const update = async (req, res) => {
   try {
@@ -340,7 +347,7 @@ module.exports = {
   getMultiAllData,
   getById,
   getList,
-  getStatic,
+  getStaticDashboard,
   cancelBooking,
   update,
   remove,

@@ -1,32 +1,25 @@
 const express = require("express");
-const {
-  create,
-  getAll,
-  getPhong,
-  getMultiDataPhong,
-  update,
-  remove,
-  getMultiAllData,
-  uploadSingleImage,
-} = require("./phong.controller");
+const control = require("./phong.controller");
 const router = express.Router();
 // const uploader = require("../../configs/cloudinary.config");
 const { isAdmin, verifyAccessToken } = require("../../middleware/verifyToken");
 
-router.post("/add", [verifyAccessToken, isAdmin], create);
+router.post("/add", [verifyAccessToken, isAdmin], control.create);
 
-router.get("/", getAll);
+router.get("/", control.getAll);
 
-router.get("/multi/:pid", getMultiDataPhong);
+router.get("/multi/:pid", control.getMultiDataPhong);
 
-router.get("/multiphong", getMultiAllData);
+router.get("/multiphong", control.getMultiAllData);
 
-router.get("/id/:id", getPhong);
+router.get("/id/:id", control.getPhong);
 
-router.put("/update/:id", [verifyAccessToken, isAdmin], update);
+router.get("/static", control.getStaticPhong);
 
-router.delete("/delete/:id", [verifyAccessToken, isAdmin], remove);
+router.put("/update/:id", [verifyAccessToken, isAdmin], control.update);
 
-router.post("/uploadimage", uploadSingleImage);
+router.delete("/delete/:id", [verifyAccessToken, isAdmin], control.remove);
+
+router.post("/uploadimage", control.uploadSingleImage);
 
 module.exports = router;

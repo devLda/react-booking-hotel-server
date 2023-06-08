@@ -11,11 +11,11 @@ router.get("/multidata", control.getMultiAllData);
 
 router.get("/list", control.getList);
 
-router.get("/static", control.getStatic);
+router.get("/static", control.getStaticDashboard);
 
 router.get("/:id", control.getById);
 
-router.put("/cancel", control.cancelBooking)
+router.put("/cancel", control.cancelBooking);
 
 router.put("/:id", control.update);
 

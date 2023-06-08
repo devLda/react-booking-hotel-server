@@ -1,5 +1,5 @@
 const HoaDon = require("./hoadon.model");
-const DichVu = require("../dichvu/dichvu.model");
+const DatPhong = require("../datphong/datphong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
@@ -94,35 +94,42 @@ const update = asyncHandler(async (req, res) => {
 
   const dvHoaDon = response.DichVu;
 
+  const dpHoaDon = await DatPhong.findById(response.DatPhong)
+                        .populate("Phong", "GiaPhong")
+
+  let tongTien = dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong
+
   request.forEach((element) => {
+
     let count = 0;
     if (dvHoaDon.length > 0)
       for (let i in dvHoaDon) {
         if (dvHoaDon[i].MaDichVu === element.MaDichVu) {
           count++;
           dvHoaDon[i].SoLuong += element.SoLuong;
+          tongTien += dvHoaDon[i].SoLuong * dvHoaDon[i].GiaDichVu 
         }
 
         if (count === 0 && parseFloat(i) === dvHoaDon.length - 1) {
+          tongTien += element.SoLuong * element.GiaDichVu 
           dvHoaDon.push(element);
         }
       }
     else {
+      tongTien += element.SoLuong * element.GiaDichVu 
       dvHoaDon.push(element);
     }
   });
 
-  // request.forEach(element => {
-  //   if(dvHoaDon.some( item => item.MaDichVu === element.MaDichVu))
-  // });
-
-  // await response.save()
+  response.DichVu = dvHoaDon
+  response.TongTien = tongTien
+  await response.save()
 
   return res.status(200).json({
-    // success: response ? true : false,
-    success: request,
-    // mes: response ? response : "Đã xảy ra lỗi",
-    mes: dvHoaDon,
+    success: response ? true : false,
+    // success: request,
+    mes: response ? response : "Đã xảy ra lỗi",
+    // mes: dpHoaDon,
   });
 });
 

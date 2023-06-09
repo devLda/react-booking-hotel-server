@@ -11,6 +11,8 @@ router.get("/multidata", control.getHD_DP_KH);
 
 router.get("/staticdv", control.staticDV);
 
+router.get("/statictong", control.staticTotal);
+
 router.get("/get/:id", control.getHD);
 
 router.put("/update/:id", control.update);

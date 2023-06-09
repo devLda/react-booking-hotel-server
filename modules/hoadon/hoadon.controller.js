@@ -58,46 +58,137 @@ const getHD = asyncHandler(async (req, res) => {
   });
 });
 
+const getCurrentDay = () => {
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  const year = today.getFullYear() + "";
+  const month =
+    today.getMonth() < 10
+      ? "0" + (today.getMonth() + 1)
+      : "" + (today.getMonth() + 1);
+  const day =
+    today.getDate() < 10 ? "0" + today.getDate() : "" + today.getDate();
+  const fday =
+    firstDay.getDate() < 10
+      ? "0" + firstDay.getDate()
+      : "" + firstDay.getDate();
+  const lday =
+    lastDay.getDate() < 10 ? "0" + lastDay.getDate() : "" + lastDay.getDate();
+  return {
+    day: day,
+    month: month,
+    year: year,
+    firstDay: fday,
+    lastDay: lday,
+  };
+};
+
+const getMonthAgo = () => {
+  const today = new Date();
+  const firstDay = new Date(
+    today.getMonth() > 0 ? today.getFullYear() : today.getFullYear() - 1,
+    today.getMonth() > 0 ? today.getMonth() - 1 : 11,
+    1
+  );
+  const lastDay = new Date(
+    today.getMonth() > 0 ? today.getFullYear() : today.getFullYear() - 1,
+    today.getMonth() > 0 ? today.getMonth() : 12,
+    0
+  );
+
+  const year = firstDay.getFullYear() + "";
+  const month =
+    firstDay.getMonth() < 10 ? "0" + (firstDay.getMonth() + 1) : "" + (firstDay.getMonth() + 1);
+  const fday =
+    firstDay.getDate() < 10
+      ? "0" + firstDay.getDate()
+      : "" + firstDay.getDate();
+  const lday =
+    lastDay.getDate() < 10 ? "0" + lastDay.getDate() : "" + lastDay.getDate();
+  return {
+    month: month,
+    year: year,
+    firstDay: fday,
+    lastDay: lday,
+  };
+};
+
+const getMonth2Ago = () => {
+  const today = new Date();
+  const firstDay = new Date(
+    today.getMonth() > 1 ? today.getFullYear() : today.getFullYear() - 1,
+    today.getMonth() > 1 ? today.getMonth() - 2 : (today.getMonth() === 1 ? 11 : 10),
+    1
+  );
+  const lastDay = new Date(
+    today.getMonth() > 1 ? today.getFullYear() : today.getFullYear() - 1,
+    today.getMonth() > 1 ? today.getMonth() - 1 : (today.getMonth() === 1 ? 12 : 11),
+    0
+  );
+
+  const year = firstDay.getFullYear() + "";
+  const month =
+    firstDay.getMonth() < 10 ? "0" + (firstDay.getMonth() + 1) : "" + (firstDay.getMonth() + 1);
+  const fday =
+    firstDay.getDate() < 10
+      ? "0" + firstDay.getDate()
+      : "" + firstDay.getDate();
+  const lday =
+    lastDay.getDate() < 10 ? "0" + lastDay.getDate() : "" + lastDay.getDate();
+  return {
+    month: month,
+    year: year,
+    firstDay: fday,
+    lastDay: lday,
+  };
+};
+
 const filterDV = (hoadons) => {
   const tempHD = [];
 
   for (const element of hoadons) {
-    let count = 0;
     if (element.DichVu.length > 0) {
       for (const item of element.DichVu) {
+        let count = 0;
         if (tempHD.length > 0) {
-          if (tempHD.some((ele) => ele.MaDichVu === item.MaDichVu)) {
+          for (let i in tempHD) {
+            if (tempHD[i].label === item.TenDichVu) {
+              count++;
+              tempHD[i].value = parseFloat(tempHD[i].value) + 1;
+            }
+
+            if (count === 0 && parseFloat(i) === tempHD.length - 1) {
+              tempHD.push({
+                label: item.TenDichVu,
+                value: 1,
+              });
+            }
           }
         } else {
-          count++;
           tempHD.push({
             label: item.TenDichVu,
-            count: count,
+            value: 1,
           });
         }
       }
     }
-
-    if (count > 0) {
-      tempRoom.push({
-        label: item.MaPhong,
-        value: count,
-      });
-    }
   }
-  return tempRoom;
+  return tempHD;
 };
 
 const staticDV = asyncHandler(async (req, res) => {
+  const regexMonth = new RegExp(`-${getCurrentDay().month}-`);
   const response = await HoaDon.find({}).populate(
     "DatPhong",
     "NgayBatDau NgayKetThuc",
     {
       NgayBatDau: {
-        $regex: /-06-/,
+        $regex: regexMonth,
       },
       NgayKetThuc: {
-        $regex: /-06-/,
+        $regex: regexMonth,
       },
     }
   );
@@ -107,9 +198,100 @@ const staticDV = asyncHandler(async (req, res) => {
     if (response[i].DatPhong === null) continue;
     filterHD.push(response[i]);
   }
-  // const result = filterDV(filterHD);
+  const result = filterDV(filterHD);
 
-  return res.status(200).json(filterHD);
+  return res.status(200).json(result);
+});
+
+const staticTotal = asyncHandler(async (req, res) => {
+  const current = getCurrentDay();
+  const ago = getMonthAgo();
+  const _2ago = getMonth2Ago();
+  const TotalThang = await HoaDon.aggregate([
+    {
+      $match: {
+        TrangThai: {
+          $eq: "Đã đặt cọc",
+        },
+        createdAt: {
+          $gte: new Date(
+            `${current.year}-${current.month}-${current.firstDay}T00:00:01.983+00:00`
+          ),
+          $lt: new Date(
+            `${current.year}-${current.month}-${current.lastDay}T23:59:59.983+00:00`
+          ),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total_tongtien: { $sum: "$TongTien" },
+      },
+    },
+  ]);
+  const TotalAgo = await HoaDon.aggregate([
+    {
+      $match: {
+        TrangThai: {
+          $eq: "Đã đặt cọc",
+        },
+        createdAt: {
+          $gte: new Date(
+            `${ago.year}-${ago.month}-${ago.firstDay}T00:00:01.983+00:00`
+          ),
+          $lt: new Date(
+            `${ago.year}-${ago.month}-${ago.lastDay}T23:59:59.983+00:00`
+          ),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total_tongtien: { $sum: "$TongTien" },
+      },
+    },
+  ]);
+  const Total2Ago = await HoaDon.aggregate([
+    {
+      $match: {
+        TrangThai: {
+          $eq: "Đã đặt cọc",
+        },
+        createdAt: {
+          $gte: new Date(
+            `${_2ago.year}-${_2ago.month}-${_2ago.firstDay}T00:00:01.983+00:00`
+          ),
+          $lt: new Date(
+            `${_2ago.year}-${_2ago.month}-${_2ago.lastDay}T23:59:59.983+00:00`
+          ),
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total_tongtien: { $sum: "$TongTien" },
+      },
+    },
+  ]);
+
+  const result = []
+  result.push({
+    label: `Tháng ${current.month}`,
+    value: TotalThang[0].total_tongtien
+  })
+  result.push({
+    label: `Tháng ${ago.month}`,
+    value: TotalAgo[0].total_tongtien
+  })
+  result.push({
+    label: `Tháng ${_2ago.month}`,
+    value: Total2Ago[0].total_tongtien
+  })
+
+  return res.status(200).json(result);
 });
 
 const update = asyncHandler(async (req, res) => {
@@ -202,6 +384,7 @@ module.exports = {
   getHD_DP_KH,
   getHD,
   staticDV,
+  staticTotal,
   update,
   remove,
 };

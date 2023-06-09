@@ -359,7 +359,9 @@ const getAccessToken = async (req, res) => {
 };
 
 const auth = asyncHandler((req, res) => {
-  console.log(req)
+  return res.status(200).json({
+    success: true
+  })
 })
 
 module.exports = {

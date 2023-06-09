@@ -17,7 +17,7 @@ router.post("/login", control.login);
 
 router.post("/loginAdmin", control.loginAdmin);
 
-router.post("/auth", [verifyAccessToken, isAdmin], control.auth);
+router.get("/auth", [verifyAccessToken, isAdmin], control.auth);
 
 router.get("/accesstoken", verifyAccessToken, control.getAccessToken);
 

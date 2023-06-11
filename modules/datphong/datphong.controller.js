@@ -185,6 +185,25 @@ const getList = async (req, res) => {
   }
 };
 
+const get7last = () => {
+  const today = new Date();
+  const last7day = [];
+  for (let i = 0; i < 7; i++) {
+    last7day.push(
+      `${
+        today.getDate() - i < 10
+          ? "0" + (today.getDate() - i)
+          : today.getDate() - i
+      }-${
+        today.getMonth() + 1 < 10
+          ? "0" + (today.getMonth() + 1)
+          : today.getMonth() + 1
+      }-${today.getFullYear()}`
+    );
+  }
+  return last7day;
+};
+
 const getStaticDashboard = asyncHandler(async (req, res) => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -195,6 +214,8 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     today.getMonth() < 10
       ? "0" + (today.getMonth() + 1)
       : "" + (today.getMonth() + 1);
+  const day =
+    today.getDate() < 10 ? "0" + today.getDate() : "" + today.getDate();
   const fday =
     firstDay.getDate() < 10
       ? "0" + firstDay.getDate()
@@ -226,7 +247,7 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     {
       $match: {
         TrangThai: {
-          $eq: "Đã đặt cọc",
+          $eq: "Đã thanh toán",
         },
       },
     },
@@ -246,11 +267,11 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     {
       $match: {
         TrangThai: {
-          $eq: "Đã đặt cọc",
+          $eq: "Đã thanh toán",
         },
         createdAt: {
-          $gte: new Date(`${year}-${month}-${fday}T00:00:01.983+00:00`),
-          $lt: new Date(`${year}-${month}-${lday}T23:59:59.983+00:00`),
+          $gte: new Date(`${year}-${month}-${day}T00:00:01.983+00:00`),
+          $lt: new Date(`${year}-${month}-${day}T23:59:59.983+00:00`),
         },
       },
     },
@@ -262,12 +283,29 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     },
   ]);
 
+  const chartLabel = [];
+  const chartValue = [];
+  const day7 = get7last();
+
+  day7.forEach((day) => {
+    let count = 0;
+    orderline.forEach((element) => {
+      if (element.NgayBatDau.includes(day)) {
+        count++;
+      }
+    });
+    chartLabel.push(day);
+    chartValue.push(count);
+  });
+
   return res.status(200).json({
     donthang: DonDatThang,
     khthang: KHThang,
     total: ToTal,
     totalthang: TotalThang,
-    orderline: orderline,
+    orderline: orderline.slice(-5),
+    chartLabel: chartLabel,
+    chartValue: chartValue,
   });
 });
 

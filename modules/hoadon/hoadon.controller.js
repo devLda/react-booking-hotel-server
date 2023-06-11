@@ -1,5 +1,6 @@
 const HoaDon = require("./hoadon.model");
 const DatPhong = require("../datphong/datphong.model");
+const Phong = require("../phong/phong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 
@@ -100,7 +101,9 @@ const getMonthAgo = () => {
 
   const year = firstDay.getFullYear() + "";
   const month =
-    firstDay.getMonth() < 10 ? "0" + (firstDay.getMonth() + 1) : "" + (firstDay.getMonth() + 1);
+    firstDay.getMonth() < 10
+      ? "0" + (firstDay.getMonth() + 1)
+      : "" + (firstDay.getMonth() + 1);
   const fday =
     firstDay.getDate() < 10
       ? "0" + firstDay.getDate()
@@ -119,18 +122,28 @@ const getMonth2Ago = () => {
   const today = new Date();
   const firstDay = new Date(
     today.getMonth() > 1 ? today.getFullYear() : today.getFullYear() - 1,
-    today.getMonth() > 1 ? today.getMonth() - 2 : (today.getMonth() === 1 ? 11 : 10),
+    today.getMonth() > 1
+      ? today.getMonth() - 2
+      : today.getMonth() === 1
+      ? 11
+      : 10,
     1
   );
   const lastDay = new Date(
     today.getMonth() > 1 ? today.getFullYear() : today.getFullYear() - 1,
-    today.getMonth() > 1 ? today.getMonth() - 1 : (today.getMonth() === 1 ? 12 : 11),
+    today.getMonth() > 1
+      ? today.getMonth() - 1
+      : today.getMonth() === 1
+      ? 12
+      : 11,
     0
   );
 
   const year = firstDay.getFullYear() + "";
   const month =
-    firstDay.getMonth() < 10 ? "0" + (firstDay.getMonth() + 1) : "" + (firstDay.getMonth() + 1);
+    firstDay.getMonth() < 10
+      ? "0" + (firstDay.getMonth() + 1)
+      : "" + (firstDay.getMonth() + 1);
   const fday =
     firstDay.getDate() < 10
       ? "0" + firstDay.getDate()
@@ -211,7 +224,7 @@ const staticTotal = asyncHandler(async (req, res) => {
     {
       $match: {
         TrangThai: {
-          $eq: "Đã đặt cọc",
+          $eq: "Đã thanh toán",
         },
         createdAt: {
           $gte: new Date(
@@ -234,7 +247,7 @@ const staticTotal = asyncHandler(async (req, res) => {
     {
       $match: {
         TrangThai: {
-          $eq: "Đã đặt cọc",
+          $eq: "Đã thanh toán",
         },
         createdAt: {
           $gte: new Date(
@@ -257,7 +270,7 @@ const staticTotal = asyncHandler(async (req, res) => {
     {
       $match: {
         TrangThai: {
-          $eq: "Đã đặt cọc",
+          $eq: "Đã thanh toán",
         },
         createdAt: {
           $gte: new Date(
@@ -277,19 +290,19 @@ const staticTotal = asyncHandler(async (req, res) => {
     },
   ]);
 
-  const result = []
+  const result = [];
   result.push({
     label: `Tháng ${current.month}`,
-    value: TotalThang[0].total_tongtien
-  })
+    value: TotalThang[0].total_tongtien,
+  });
   result.push({
     label: `Tháng ${ago.month}`,
-    value: TotalAgo[0].total_tongtien
-  })
+    value: TotalAgo[0].total_tongtien,
+  });
   result.push({
     label: `Tháng ${_2ago.month}`,
-    value: Total2Ago[0].total_tongtien
-  })
+    value: Total2Ago[0].total_tongtien,
+  });
 
   return res.status(200).json(result);
 });
@@ -312,8 +325,6 @@ const update = asyncHandler(async (req, res) => {
     "GiaPhong"
   );
 
-  let tongTien = dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong;
-
   request.forEach((element) => {
     let count = 0;
     if (dvHoaDon.length > 0)
@@ -321,29 +332,69 @@ const update = asyncHandler(async (req, res) => {
         if (dvHoaDon[i].MaDichVu === element.MaDichVu) {
           count++;
           dvHoaDon[i].SoLuong += element.SoLuong;
-          tongTien += dvHoaDon[i].SoLuong * dvHoaDon[i].GiaDichVu;
         }
 
         if (count === 0 && parseFloat(i) === dvHoaDon.length - 1) {
-          tongTien += element.SoLuong * element.GiaDichVu;
           dvHoaDon.push(element);
         }
       }
     else {
-      tongTien += element.SoLuong * element.GiaDichVu;
       dvHoaDon.push(element);
     }
   });
 
+  const tongTien = dvHoaDon.reduce((preVal, current) => {
+    preVal += current.SoLuong * current.GiaDichVu;
+    return preVal;
+  }, dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong);
+
   response.DichVu = dvHoaDon;
   response.TongTien = tongTien;
+  response.markModified("DichVu");
+  response.markModified("TongTien");
   await response.save();
 
   return res.status(200).json({
     success: response ? true : false,
-    // success: request,
+    // request: request,
     mes: response ? response : "Đã xảy ra lỗi",
-    // mes: dpHoaDon,
+    // hd: dvHoaDon,
+  });
+});
+
+const updatett = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Không tìm thấy hoá đơn");
+
+  const hoadon = await HoaDon.findByIdAndUpdate(
+    id,
+    {
+      TrangThai: "Đã thanh toán",
+    },
+    { new: true }
+  );
+
+  const datphong = await DatPhong.findByIdAndUpdate(
+    hoadon.DatPhong,
+    {
+      TrangThai: "Đã thanh toán",
+    },
+    { new: true }
+  );
+
+  const phong = await Phong.findById(datphong.Phong);
+
+  phong?.LichDat.forEach((element) => {
+    if (element.DatPhong.toString() === datphong.Phong.toString()) {
+      element.TrangThai = "Đã thanh toán";
+    }
+  });
+  await phong.save();
+
+  return res.status(200).json({
+    success: phong ? true : false,
+    mes: phong ? phong : "Thất bại",
   });
 });
 
@@ -386,5 +437,6 @@ module.exports = {
   staticDV,
   staticTotal,
   update,
+  updatett,
   remove,
 };

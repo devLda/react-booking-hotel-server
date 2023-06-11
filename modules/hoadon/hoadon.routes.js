@@ -17,4 +17,6 @@ router.get("/get/:id", control.getHD);
 
 router.put("/update/:id", control.update);
 
+router.put("/updatett/:id", control.updatett);
+
 module.exports = router;

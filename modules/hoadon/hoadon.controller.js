@@ -362,6 +362,56 @@ const update = asyncHandler(async (req, res) => {
   });
 });
 
+const huydv = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const request = req.body;
+
+  if (!id) throw new Error("Không tìm thấy hóa đơn!");
+
+  if (request.length === 0) throw new Error("Chưa có dịch vụ nào được thêm!!!");
+
+  const response = await HoaDon.findById(id);
+
+  const dvHoaDon = response.DichVu;
+
+  const dpHoaDon = await DatPhong.findById(response.DatPhong).populate(
+    "Phong",
+    "GiaPhong"
+  );
+
+  request.forEach((element) => {
+    if (dvHoaDon.length > 0)
+      for (let i in dvHoaDon) {
+        if (dvHoaDon[i].MaDichVu === element.MaDichVu) {
+          if (dvHoaDon[i].SoLuong > element.SoLuong)
+            dvHoaDon[i].SoLuong = dvHoaDon[i].SoLuong - element.SoLuong;
+          else {
+            dvHoaDon.splice(i, 1);
+          }
+        }
+      }
+  });
+
+  const tongTien = dvHoaDon.reduce((preVal, current) => {
+    preVal += current.SoLuong * current.GiaDichVu;
+    return preVal;
+  }, dpHoaDon?.TongNgay * dpHoaDon?.Phong?.GiaPhong);
+
+  response.DichVu = dvHoaDon;
+  response.TongTien = tongTien;
+  response.markModified("DichVu");
+  response.markModified("TongTien");
+  await response.save();
+
+  return res.status(200).json({
+    success: response ? true : false,
+    // request: tongTien,
+    mes: response ? response : "Đã xảy ra lỗi",
+    // hd: dvHoaDon,
+  });
+});
+
 const updatett = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -437,6 +487,7 @@ module.exports = {
   staticDV,
   staticTotal,
   update,
+  huydv,
   updatett,
   remove,
 };

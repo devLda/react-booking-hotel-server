@@ -12,7 +12,7 @@ router.get("/multi/:pid", control.getMultiDataPhong);
 
 router.get("/multiphong", control.getMultiAllData);
 
-router.get("/id/:id", control.getPhong);
+router.get("/maphong/:MaPhong", control.getPhong);
 
 router.get("/static", control.getStaticPhong);
 

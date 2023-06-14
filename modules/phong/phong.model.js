@@ -4,7 +4,7 @@ const mongoosePaginate = require("mongoose-paginate");
 const PhongSchema = new mongoose.Schema(
   {
     MaPhong: {
-      type: Number,
+      type: String,
       required: true,
     },
     LoaiPhong: {

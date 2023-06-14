@@ -327,7 +327,7 @@ const cancelBooking = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  const hoadon = await HoaDon.findByIdAndUpdate(
+  await HoaDon.findByIdAndUpdate(
     IdHoaDon,
     {
       TrangThai: "Đã hủy",
@@ -351,20 +351,56 @@ const cancelBooking = asyncHandler(async (req, res) => {
   });
 });
 
-const update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Datphong.findOneAndUpdate({ _id: id }, req.body, {
-      new: true,
-    });
+const update = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { NgayBatDau, NgayKetThuc } = req.body;
+  const dp = await Datphong.findById(id);
+  const phong = await PhongMD.findById(dp.Phong);
+  const hd = await HoaDon.findOne({DatPhong: id})
 
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Datphong update failed: " + err);
-    const { status, message } = errorHandler(err);
-    res.status(status).json({ message, entity: "Datphong" });
-  }
-};
+  hd.TongTien = hd.TongTien - (dp.TongNgay * phong.GiaPhong)
+
+
+  const temp = phong?.LichDat.map((item) => {
+    if (item.DatPhong.toString() === id.toString()) {
+      item.NgayBatDau = NgayBatDau;
+      item.NgayKetThuc = NgayKetThuc;
+      return item;
+    }
+    return item;
+  });
+
+  const diff = moment(NgayKetThuc, "DD-MM-YYYY").diff(
+    moment(NgayBatDau, "DD-MM-YYYY"),
+    "days"
+  );
+
+  dp.NgayBatDau = NgayBatDau;
+  dp.NgayKetThuc = NgayKetThuc;
+  dp.TongNgay = diff;
+  phong.LichDat = temp;
+
+  hd.TongTien = hd.TongTien + (dp.TongNgay * phong.GiaPhong)
+
+
+  dp.markModified("NgayBatDau");
+  dp.markModified("NgayKetThuc");
+  dp.markModified("TongNgay");
+  dp.save();
+
+  hd.save();
+  phong.save();
+
+  return res.status(200).json({
+    success: dp && phong ? true : false,
+    mes:
+      dp && phong
+        ? "Cập nhật ngày đặt thành công"
+        : "Đã xảy ra lỗi. Vui lòng thử lại!",
+    // success: diff ? true : false,
+    // mes: diff ? diff : "Đã xảy ra lỗi",
+  });
+});
 
 const remove = async (req, res) => {
   try {

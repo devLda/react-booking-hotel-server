@@ -1,3 +1,4 @@
+var NumberInt = require("mongodb").Int32;
 const Phong = require("./phong.model");
 const LoaiPhong = require("../loaiphong/loaiphong.model");
 const asyncHandler = require("express-async-handler");
@@ -35,9 +36,9 @@ const getAll = asyncHandler(async (req, res) => {
 });
 
 const getPhong = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  if (!id) throw new Error("Không tìm thấy phòng!!!");
-  const result = await Phong.findById(id);
+  const { MaPhong } = req.params;
+  if (!MaPhong) throw new Error("Không tìm thấy phòng!!!");
+  const result = await Phong.findOne({MaPhong: MaPhong});
 
   return res.status(200).json({
     success: result ? true : false,

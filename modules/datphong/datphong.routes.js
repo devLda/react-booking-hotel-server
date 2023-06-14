@@ -17,7 +17,7 @@ router.get("/:id", control.getById);
 
 router.put("/cancel", control.cancelBooking);
 
-router.put("/:id", control.update);
+router.put("/updateday/:id", control.update);
 
 router.delete("/:id", [verifyAccessToken, isAdmin], control.remove);
 

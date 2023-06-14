@@ -12,6 +12,69 @@ const { v4: uuidv4 } = require("uuid");
 const sendMail = require("../../utils/sendMail");
 
 const create = asyncHandler(async (req, res) => {
+  const { Phong, NgayBatDau, NgayKetThuc, TongNgay, TenKH, SDT, Email } =
+    req.body;
+  if (!Phong || !NgayBatDau || !NgayKetThuc || !TenKH || !SDT || !Email)
+    throw new Error("Thiếu dữ liệu đầu vào!!!");
+
+  const findPhong = await PhongMD.findById(Phong);
+
+  const findKH = await ThongTinKH.findOne({
+    Email: Email,
+    TenKH: TenKH,
+    SDT: SDT,
+  });
+  if (!findPhong) throw new Error("Không tìm thấy phòng đã chọn");
+  else {
+    let KH;
+    if (!findKH) {
+      const newKH = new ThongTinKH({
+        Email: Email,
+        TenKH: TenKH,
+        SDT: SDT,
+      });
+      KH = await newKH.save();
+    } else {
+      KH = findKH;
+    }
+
+    const newBook = new Datphong({
+      Phong: Phong,
+      ThongTinKH: KH._id,
+      NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
+      NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
+      TongNgay: TongNgay,
+      TrangThai: "Đã đặt",
+    });
+
+    const booking = await newBook.save();
+
+    const roomtemp = await PhongMD.findOne({ _id: Phong });
+
+    roomtemp.LichDat.push({
+      DatPhong: booking._id,
+      NgayBatDau: moment(NgayBatDau, "DD-MM-YYYY").format("DD-MM-YYYY"),
+      NgayKetThuc: moment(NgayKetThuc, "DD-MM-YYYY").format("DD-MM-YYYY"),
+      KhachHang: KH._id,
+      TrangThai: booking.TrangThai,
+    });
+    await roomtemp.save();
+
+    await HoaDon.create({
+      DatPhong: booking._id,
+      ThongTinKH: KH._id,
+      TongTien: TongNgay * roomtemp.GiaPhong,
+      TrangThai: "Đã đặt cọc",
+    });
+
+    return res.status(200).json({
+      success: newBook ? true : false,
+      mes: newBook ? booking : "Đã xảy ra lỗi!!!",
+    });
+  }
+});
+
+const autoCreate = asyncHandler(async (req, res) => {
   const {
     Phong,
     NgayBatDau,
@@ -356,10 +419,9 @@ const update = asyncHandler(async (req, res) => {
   const { NgayBatDau, NgayKetThuc } = req.body;
   const dp = await Datphong.findById(id);
   const phong = await PhongMD.findById(dp.Phong);
-  const hd = await HoaDon.findOne({DatPhong: id})
+  const hd = await HoaDon.findOne({ DatPhong: id });
 
-  hd.TongTien = hd.TongTien - (dp.TongNgay * phong.GiaPhong)
-
+  hd.TongTien = hd.TongTien - dp.TongNgay * phong.GiaPhong;
 
   const temp = phong?.LichDat.map((item) => {
     if (item.DatPhong.toString() === id.toString()) {
@@ -380,8 +442,7 @@ const update = asyncHandler(async (req, res) => {
   dp.TongNgay = diff;
   phong.LichDat = temp;
 
-  hd.TongTien = hd.TongTien + (dp.TongNgay * phong.GiaPhong)
-
+  hd.TongTien = hd.TongTien + dp.TongNgay * phong.GiaPhong;
 
   dp.markModified("NgayBatDau");
   dp.markModified("NgayKetThuc");
@@ -417,6 +478,7 @@ const remove = async (req, res) => {
 
 module.exports = {
   create,
+  autoCreate,
   getAll,
   getMultiAllData,
   getById,

@@ -3,7 +3,9 @@ const control = require("./datphong.controller");
 const router = express.Router();
 const { isAdmin, verifyAccessToken } = require("../../middleware/verifyToken");
 
-router.post("/add", control.create);
+router.post("/adddp", control.create);
+
+router.post("/add", control.autoCreate);
 
 router.get("/", [verifyAccessToken, isAdmin], control.getAll);
 

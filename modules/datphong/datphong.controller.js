@@ -69,7 +69,7 @@ const create = asyncHandler(async (req, res) => {
 
     return res.status(200).json({
       success: newBook ? true : false,
-      mes: newBook ? booking : "Đã xảy ra lỗi!!!",
+      mes: newBook ? "Tạo đơn đặt phòng thành công" : "Đã xảy ra lỗi!!!",
     });
   }
 });

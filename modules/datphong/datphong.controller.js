@@ -214,7 +214,10 @@ const getMultiAllData = asyncHandler(async (req, res) => {
 const getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await Datphong.findById(id);
+    const result = await Datphong.findById(id).populate(
+      "ThongTinKH",
+      "TenKH SDT Email"
+    );
 
     return res.status(200).json(result);
   } catch (err) {

@@ -1,31 +1,30 @@
 const express = require("express");
-const {
-  create,
-  getAll,
-  getLP,
-  getList,
-  update,
-  remove,
-  uploadSingleImage,
-  // uploadMultiImage,
-} = require("./loaiphong.controller");
+const control = require("./loaiphong.controller");
 const router = express.Router();
 const { verifyAccessToken, isAdmin } = require("../../middleware/verifyToken");
 
-router.post("/add", [verifyAccessToken, isAdmin], create);
+router.post("/add", [verifyAccessToken, isAdmin], control.create);
 
-router.get("/", getAll);
+router.get("/", control.getAll);
 
-router.get("/list", getList);
+router.get("/all", [verifyAccessToken, isAdmin], control.getAll);
 
-router.get("/get/:TenLoaiPhong", getLP);
+router.get("/list", control.getList);
 
-router.put("/update/:TenLoaiPhong", [verifyAccessToken, isAdmin], update);
+router.get("/get/:TenLoaiPhong", control.getLP);
 
-router.delete("/delete/:TenLoaiPhong", [verifyAccessToken, isAdmin], remove);
+router.put(
+  "/update/:TenLoaiPhong",
+  [verifyAccessToken, isAdmin],
+  control.update
+);
 
-router.post("/uploadimage", uploadSingleImage);
+router.delete(
+  "/delete/:TenLoaiPhong",
+  [verifyAccessToken, isAdmin],
+  control.remove
+);
 
-// router.post("/uploadmultiimage", uploadMultiImage);
+router.post("/uploadimage", control.uploadSingleImage);
 
 module.exports = router;

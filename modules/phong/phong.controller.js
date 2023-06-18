@@ -1,4 +1,3 @@
-var NumberInt = require("mongodb").Int32;
 const Phong = require("./phong.model");
 const LoaiPhong = require("../loaiphong/loaiphong.model");
 const asyncHandler = require("express-async-handler");
@@ -6,9 +5,9 @@ const cloudinary = require("../../configs/cloudinary.config");
 const moment = require("moment");
 
 const create = asyncHandler(async (req, res) => {
-  const { IDLoaiPhong, Tang, SoPhong, SoNguoi, DienTich, GiaPhong } = req.body;
+  const { IDLoaiPhong, Tang, MaPhong, SoNguoi, DienTich, GiaPhong } = req.body;
 
-  if (!IDLoaiPhong || !Tang || !SoPhong || !SoNguoi || !DienTich || !GiaPhong)
+  if (!IDLoaiPhong || !Tang || !MaPhong || !SoNguoi || !DienTich || !GiaPhong)
     return res.status(400).json({
       success: false,
       mes: "Thiếu trường dữ liệu",
@@ -18,7 +17,16 @@ const create = asyncHandler(async (req, res) => {
 
   if (!loaiphong) throw new Error("Loại phòng không tồn tại");
 
-  const newPhong = await Phong.create(req.body);
+  const data = {
+    MaPhong: MaPhong,
+    LoaiPhong: IDLoaiPhong,
+    Tang: Tang,
+    SoNguoi: SoNguoi,
+    DienTich: DienTich,
+    GiaPhong: GiaPhong,
+  };
+
+  const newPhong = await Phong.create(data);
   return res.status(200).json({
     success: newPhong ? true : false,
     mes: newPhong ? newPhong : "Đã xảy ra lỗi!!!",
@@ -38,7 +46,18 @@ const getAll = asyncHandler(async (req, res) => {
 const getPhong = asyncHandler(async (req, res) => {
   const { MaPhong } = req.params;
   if (!MaPhong) throw new Error("Không tìm thấy phòng!!!");
-  const result = await Phong.findOne({MaPhong: MaPhong});
+  const result = await Phong.findOne({ MaPhong: MaPhong });
+
+  return res.status(200).json({
+    success: result ? true : false,
+    mes: result ? result : "Đã xảy ra lỗi",
+  });
+});
+
+const getById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id) throw new Error("Không tìm thấy phòng!!!");
+  const result = await Phong.findById(id);
 
   return res.status(200).json({
     success: result ? true : false,
@@ -74,30 +93,32 @@ const getMultiAllData = asyncHandler(async (req, res) => {
 });
 
 const update = asyncHandler(async (req, res) => {
-  const { id, LoaiPhong } = req.body;
+  const { id } = req.params;
 
-  if (!LoaiPhong) throw new Error("Không tìm thấy loại phòng!");
+  const { IDLoaiPhong, Tang, MaPhong, SoNguoi, DienTich, GiaPhong } = req.body;
 
-  const loaiphong = await LoaiPhong.findById(LoaiPhong);
+  if (!IDLoaiPhong || !Tang || !MaPhong || !SoNguoi || !DienTich || !GiaPhong)
+    return res.status(400).json({
+      success: false,
+      mes: "Thiếu trường dữ liệu",
+    });
+
+  const loaiphong = await LoaiPhong.findById(IDLoaiPhong);
 
   if (!loaiphong) throw new Error("Loại phòng không tồn tại");
 
-  const data = req.body;
+  const data = {
+    MaPhong: MaPhong,
+    LoaiPhong: IDLoaiPhong,
+    Tang: Tang,
+    SoNguoi: SoNguoi,
+    DienTich: DienTich,
+    GiaPhong: GiaPhong,
+  };
 
-  const response = await Phong.findByIdAndUpdate(
-    id,
-    {
-      SoPhong: data.SoPhong,
-      Tang: data.Tang,
-      LoaiPhong: data.LoaiPhong,
-      SoNguoi: data.SoNguoi,
-      DienTich: data.DienTich,
-      GiaPhong: data.GiaPhong,
-    },
-    {
-      new: true,
-    }
-  );
+  const response = await Phong.findByIdAndUpdate(id, data, {
+    new: true,
+  });
 
   return res.status(200).json({
     success: response ? true : false,
@@ -108,23 +129,34 @@ const update = asyncHandler(async (req, res) => {
 const remove = asyncHandler(async (req, res) => {
   const { id, images } = req.params;
 
-  if (!images) throw new Error("Không tìm thấy phòng");
-  const arrImgId = images.split(",");
-  if (arrImgId?.length > 0)
-    for (let i = 1; i < arrImgId?.length; i++) {
-      let item = arrImgId[i].split("AnhOctHotel/")[1];
-      item = "AnhOctHotel/" + arrImgId[i]?.split(".")[0];
-      if (item) {
-        await cloudinary.uploader.destroy(item);
-      }
-    }
-  await Phong.findByIdAndUpdate(id, { $set: { images: [] } });
-
   if (!id) throw new Error("Không tìm thấy phòng");
+
+  const findPhong = await Phong.findById(id);
+
+  if (findPhong.LichDat.length > 0) {
+    return res.status(200).json({
+      success: false,
+      mes: "Không thể xoá vì phòng đã có lịch sử đơn đặt",
+    });
+  }
+
+  if (images) {
+    const arrImgId = images.split(",");
+    if (arrImgId?.length > 0)
+      for (let i = 1; i < arrImgId?.length; i++) {
+        let item = arrImgId[i].split("AnhOctHotel/")[1];
+        item = "AnhOctHotel/" + arrImgId[i]?.split(".")[0];
+        if (item) {
+          await cloudinary.uploader.destroy(item);
+        }
+      }
+  }
+
   const result = await Phong.findByIdAndDelete(id);
+
   return res.status(200).json({
     success: result ? true : false,
-    mes: result ? result : "Đã xảy ra lỗi!!!",
+    mes: result ? "Xoá phòng thành công" : "Đã xảy ra lỗi!!!",
   });
 });
 
@@ -132,10 +164,10 @@ const uploadSingleImage = asyncHandler(async (req, res) => {
   // const { TenLoaiPhong } = req.params;
   const { id, image, isCre } = req.body;
 
-  if (!isCre) {
-    const findLP = await Phong.findById(id);
+  const findPhong = await Phong.findById(id);
+  if (!isCre && findPhong.images.length > 0) {
     //retrieve current image ID
-    let imgId = findLP.images[0].split("AnhOctHotel/")[1];
+    let imgId = findPhong.images[0].split("AnhOctHotel/")[1];
     imgId = "AnhOctHotel/" + imgId.split(".")[0];
     if (imgId) {
       await cloudinary.uploader.destroy(imgId);
@@ -214,6 +246,7 @@ module.exports = {
   create,
   getAll,
   getPhong,
+  getById,
   getMultiDataPhong,
   getMultiAllData,
   update,

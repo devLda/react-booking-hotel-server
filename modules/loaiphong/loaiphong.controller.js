@@ -2,6 +2,7 @@ const Loaiphong = require("./loaiphong.model");
 const errorHandler = require("../../utils/errorHandler");
 const asyncHandler = require("express-async-handler");
 const cloudinary = require("../../configs/cloudinary.config");
+const phongModel = require("../phong/phong.model");
 
 const create = asyncHandler(async (req, res) => {
   const { TenLoaiPhong } = req.body;
@@ -100,12 +101,12 @@ const update = asyncHandler(async (req, res) => {
   });
 });
 
-const remove = async (req, res) => {
-  try {
-    const { TenLoaiPhong } = req.params;
+const remove = asyncHandler(async (req, res) => {
+  const { TenLoaiPhong } = req.params;
 
-    const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
-    //retrieve current image ID
+  const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
+  //retrieve current image ID
+  if (findLP.images.length > 0) {
     let imgId = findLP.images[0].split("AnhOctHotel/")[1];
     imgId = "AnhOctHotel/" + imgId.split(".")[0];
     if (imgId) {
@@ -117,26 +118,31 @@ const remove = async (req, res) => {
       },
       { $pop: { images: -1 } }
     );
-
-    const result = await Loaiphong.findOneAndDelete({
-      TenLoaiPhong: TenLoaiPhong,
-    });
-    return res.status(200).json({
-      success: result ? true : false,
-      mes: result ? "Xoá loại phòng thành công" : "Đã có lỗi xảy ra",
-    });
-  } catch (err) {
-    console.error("Loaiphong delete failed: " + err);
-    errorHandler(err, res, req);
   }
-};
+
+  const findPhong = await phongModel.findOne({ Loaiphong: findLP._id });
+  if (findPhong) {
+    return res.status(200).json({
+      success: false,
+      mes: "Không thể xoá vì loại phòng có phòng đang tham chiếu đến",
+    });
+  }
+
+  const result = await Loaiphong.findOneAndDelete({
+    TenLoaiPhong: TenLoaiPhong,
+  });
+  return res.status(200).json({
+    success: result ? true : false,
+    mes: result ? "Xoá loại phòng thành công" : "Đã có lỗi xảy ra",
+  });
+});
 
 const uploadSingleImage = asyncHandler(async (req, res) => {
   // const { TenLoaiPhong } = req.params;
   const { TenLoaiPhong, image, isCre } = req.body;
 
-  if (!isCre) {
-    const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
+  const findLP = await Loaiphong.findOne({ TenLoaiPhong: TenLoaiPhong });
+  if (!isCre && findLP.images.length > 0) {
     //retrieve current image ID
     let imgId = findLP.images[0].split("AnhOctHotel/")[1];
     imgId = "AnhOctHotel/" + imgId.split(".")[0];

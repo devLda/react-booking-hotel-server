@@ -11,6 +11,44 @@ const stripe = require("stripe")(
 const { v4: uuidv4 } = require("uuid");
 const sendMail = require("../../utils/sendMail");
 
+const vnd = 23000;
+
+const formatMoney = (tien) => {
+  let moneyFormat = "";
+  const arrMoney = [];
+  while (tien > 0) {
+    if (tien % 1000 === 0) {
+      arrMoney.push(tien % 1000);
+      tien = tien / 1000;
+    } else {
+      arrMoney.push(tien % 1000);
+      tien = Math.floor(tien / 1000);
+    }
+  }
+
+  for (let i = arrMoney.length - 1; i >= 0; i--) {
+    if (i === arrMoney.length - 1) {
+      moneyFormat += arrMoney[i] + ".";
+      continue;
+    }
+
+    if (arrMoney[i] > 99) {
+      moneyFormat += arrMoney[i];
+    }
+    if (9 < arrMoney[i] && arrMoney[i] < 100) {
+      moneyFormat += arrMoney[i] + "0";
+    }
+    if (arrMoney[i] < 10) {
+      moneyFormat += arrMoney[i] + "00";
+    }
+
+    if (i > 0) {
+      moneyFormat += ".";
+    }
+  }
+  return moneyFormat;
+};
+
 const create = asyncHandler(async (req, res) => {
   const { Phong, NgayBatDau, NgayKetThuc, TongNgay, TenKH, SDT, Email } =
     req.body;
@@ -95,9 +133,9 @@ const autoCreate = asyncHandler(async (req, res) => {
 
   const payment = await stripe.charges.create(
     {
-      amount: DaThanhToan * 100,
+      amount: DaThanhToan * vnd,
       customer: customer.id,
-      currency: "usd",
+      currency: "vnd",
       receipt_email: token.email,
     },
     {
@@ -168,7 +206,9 @@ const autoCreate = asyncHandler(async (req, res) => {
         Kính chào quý khách hàng ${TenKH},<br/>
       Cảm ơn quý khách hàng đã đặt phòng tại khách sạn chúng tôi – Anh Oct Luxury Hotel.<br/>
       Chúng tôi xác nhận rằng quý đã đặt 1 phòng với số phòng <b> ${MaPhong} </b> từ ngày <b> ${NgayBatDau} </b> đến <b> ${NgayKetThuc} </b>
-      và quý khách đã thanh toán <b> ${DaThanhToan} $ </b> tương ứng với 30% số tiền đặt cọc. Email này là xác thực của quý khách khi check-in.<br/>
+      và quý khách đã thanh toán <b> ${formatMoney(
+        DaThanhToan * vnd
+      )} đ </b> tương ứng với 30% số tiền đặt cọc. Email này là xác thực của quý khách khi check-in.<br/>
       Nếu có bất cứ thắc mắc gì vui lòng liên hệ với chúng tôi qua số máy: +84988888888.<br/>
       Chúng tôi mong đợi được đón tiếp quý khách.<br/>
         Trân trọng.<br/>
@@ -320,7 +360,7 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: null,
-        total_tongtien: { $sum: "$TongTien" },
+        tongtien: { $sum: "$TongTien" },
       },
     },
   ]);
@@ -344,7 +384,7 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: null,
-        total_tongtien: { $sum: "$TongTien" },
+        tongtien_thang: { $sum: "$TongTien" },
       },
     },
   ]);
@@ -367,8 +407,8 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
   return res.status(200).json({
     donthang: DonDatThang,
     khthang: KHThang,
-    total: ToTal,
-    totalthang: TotalThang,
+    total: ToTal.length > 0 ? ToTal[0]?.tongtien : 0,
+    totalthang: TotalThang.length > 0 ? TotalThang[0]?.tongtien_thang : 0,
     orderline: orderline.slice(-5),
     chartLabel: chartLabel,
     chartValue: chartValue,
@@ -376,16 +416,16 @@ const getStaticDashboard = asyncHandler(async (req, res) => {
 });
 
 const cancelBooking = asyncHandler(async (req, res) => {
-  const { IdHoaDon, IdDatPhong } = req.body;
-  if (!IdHoaDon || !IdDatPhong) throw new Error("Đơn đặt đã không còn tồn tại");
+  const { id } = req.params;
+  if (!id) throw new Error("Đơn đặt đã không còn tồn tại");
 
-  // const datphong = await DatPhong.findByIdAndUpdate(IdDatPhong, {
+  // const datphong = await DatPhong.findByIdAndUpdate(id, {
   //   TrangThai: "Đã hủy"
   // }, {
   //   new: true
   // })
   const datphong = await Datphong.findByIdAndUpdate(
-    IdDatPhong,
+    id,
     {
       TrangThai: "Đã hủy",
     },
@@ -393,15 +433,9 @@ const cancelBooking = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  await HoaDon.findByIdAndUpdate(
-    IdHoaDon,
-    {
-      TrangThai: "Đã hủy",
-    },
-    {
-      new: true,
-    }
-  );
+  const hoadon = await HoaDon.findOne({ DatPhong: datphong._id });
+  (hoadon.TrangThai = "Đã hủy"), hoadon.save();
+
   const phong = await PhongMD.findById(datphong.Phong);
 
   const temp = phong?.LichDat.filter((item) => {
@@ -412,12 +446,94 @@ const cancelBooking = asyncHandler(async (req, res) => {
   phong.save();
 
   return res.status(200).json({
-    success: phong ? true : false,
-    data: phong,
+    success: phong && hoadon && datphong ? true : false,
+    mes:
+      phong && hoadon && datphong
+        ? "Huỷ đặt phòng thành công"
+        : "Đã có lỗi xảy ra",
   });
 });
 
 const update = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { Phong, TenKH, SDT, Email, NgayBatDau, NgayKetThuc } = req.body;
+  if (!Phong || !TenKH || !SDT || !Email)
+    throw new Error("Thiếu trường dữ liệu");
+
+  const findDP = await Datphong.findById(id);
+
+  if (!findDP) throw new Error("Không tìm thấy phòng");
+
+  const findHD = await HoaDon.findOne({
+    DatPhong: findDP._id,
+    ThongTinKH: findDP.ThongTinKH,
+  });
+
+  const PhongTruoc = await PhongMD.findById(findDP.Phong);
+
+  let tienDV = findHD.TongTien - findDP.TongNgay * PhongTruoc.GiaPhong;
+
+  let change = 0;
+
+  if (findDP.Phong !== Phong) {
+    change++;
+    findDP.Phong = Phong;
+    findDP.markModified("Phong");
+  }
+  if (findDP.NgayBatDau !== NgayBatDau) {
+    change++;
+    findDP.NgayBatDau = NgayBatDau;
+    findDP.markModified("NgayBatDau");
+  }
+  if (findDP.NgayKetThuc !== NgayKetThuc) {
+    change++;
+    findDP.NgayKetThuc = NgayKetThuc;
+    findDP.markModified("NgayKetThuc");
+  }
+
+  const PhongSau = await PhongMD.findById(findDP.Phong);
+
+  let TongTien = 0;
+  let TongNgay = 0;
+
+  if (change > 0) {
+    TongNgay = moment(findDP.NgayKetThuc, "DD-MM-YYYY").diff(
+      moment(findDP.NgayBatDau, "DD-MM-YYYY"),
+      "days"
+    );
+    TongTien = tienDV + TongNgay * PhongSau.GiaPhong;
+    findHD.TongTien = TongTien;
+    findDP.TongNgay = TongNgay;
+    findHD.markModified("TongTien");
+    findDP.markModified("TongNgay");
+  }
+
+  const findKH = await ThongTinKH.findById(findDP.ThongTinKH);
+
+  if (findKH.TenKH !== TenKH) {
+    findKH.TenKH = TenKH;
+    findKH.markModified("TenKH");
+  }
+  if (findKH.SDT !== SDT) {
+    findKH.SDT = SDT;
+    findKH.markModified("SDT");
+  }
+  if (findKH.Email !== Email) {
+    findKH.Email = Email;
+    findKH.markModified("Email");
+  }
+
+  const resDP = await findDP.save();
+  const resKH = await findKH.save();
+  await findHD.save();
+
+  return res.status(200).json({
+    success: resDP && resKH ? true : false,
+    mes: resDP && resKH ? "Cập nhật đơn đặt thành công" : "Đã xảy ra lỗi",
+  });
+});
+
+const updateDay = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { NgayBatDau, NgayKetThuc } = req.body;
   const dp = await Datphong.findById(id);
@@ -489,5 +605,6 @@ module.exports = {
   getStaticDashboard,
   cancelBooking,
   update,
+  updateDay,
   remove,
 };

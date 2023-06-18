@@ -24,11 +24,13 @@ const {
 
 const router = express.Router();
 
-router.get("/", [verifyAccessToken, isAdmin], getAll);
+// router.get("/", [verifyAccessToken, isAdmin], getAll);
+router.get("/", getAll);
 
 router.get("/get/:Email", getUser);
 
-router.post("/create", [verifyAccessToken, isAdmin], create);
+// router.post("/create", [verifyAccessToken, isAdmin], create);
+router.post("/create", create);
 
 // router.post("/register", register);
 
@@ -52,10 +54,13 @@ router.get("/final-register/:token", finalRegister);
 
 // router.delete("/delete/:id", [verifyAccessToken, isAdmin], remove);
 
-router.delete("/delete/:Email", [verifyAccessToken, isAdmin], remove);
+// router.delete("/delete/:Email", [verifyAccessToken, isAdmin], remove);
+router.delete("/delete/:Email", remove);
 
-router.get("/delete/list", [verifyAccessToken, isAdmin], removeList);
+// router.get("/delete/list", [verifyAccessToken, isAdmin], removeList);
+router.get("/delete/list", removeList);
 
-router.put("/update/:Email", [verifyAccessToken, isAdmin], update);
+// router.put("/update/:Email", [verifyAccessToken, isAdmin], update);
+router.put("/update/:Email", update);
 
 module.exports = router;
